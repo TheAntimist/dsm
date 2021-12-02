@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package rpcservice;
+
+service RPCService {
+  rpc hello(Empty) returns (Empty) {}
+  rpc request(LockRequest) returns (LockReply) {}
+  rpc reply(LockRequest) returns (Empty) {}
+}
+
+// Generic Empty Body
+message Empty {
+}
+
+message LockRequest {
+    int32 lockNo = 1;
+    int32 seqNo = 2;
+    int32 nodeId = 3;
+}
+
+message LockReply {
+    int32 lockNo = 1;
+    int32 seqNo = 2;
+    int32 nodeId = 3;
+}
