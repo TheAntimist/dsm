@@ -31,6 +31,9 @@ void invalidate_page(int page_num){
     return;
 }
 
+void* get_page_addr(void *addr, int page_num){
+    return (void*)( ((char *) addr) + PAGE_SIZE*page_num);
+}
 
 void * get_page_addr(void *addr){
 
@@ -116,13 +119,16 @@ void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size){
     }
     if(!is_default){
         is_default = true;
-        num_pages = (int) (psu_ds_size / PAGE_SIZE);
-        start_addr = psu_ds_start;
     }
+    
+    num_pages = (int) (psu_ds_size / PAGE_SIZE);
+    start_addr = psu_ds_start;
 
     //rpc call to directory node to register segment
     
-
+    for(int i = 0; i < num_pages; i++){
+        mprotect(get_page_addr(psu_ds_start, i), PAGE_SIZE, PROT_NONE);
+    }
     
 
 }

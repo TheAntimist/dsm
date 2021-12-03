@@ -26,6 +26,8 @@ void request_access(void* addr, bool is_write);
 
 void* get_page_addr(void *addr);
 
+void* get_page_addr(void *addr, int page_num);
+
 void invalidate_page(int page_num);
 
 #endif
