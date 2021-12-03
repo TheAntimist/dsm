@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package directory;
+
+service DirectoryService {
+  rpc hello(Empty) returns (Empty) {}
+  rpc register_segment(RegisterRequest) returns (Empty) {}
+}
+
+message Empty {
+}
+
+message RegisterRequest {
+  string name = 1;
+  int32 num_pages = 2;
+}

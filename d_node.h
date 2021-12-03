@@ -15,7 +15,7 @@
 
 using namespace std; 
 
-class D_mem{
+class D_mem {
 
 public:
     string name;

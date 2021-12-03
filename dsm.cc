@@ -125,6 +125,8 @@ void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size){
     start_addr = psu_ds_start;
 
     //rpc call to directory node to register segment
+	// TODO:
+	// register_segment("default", num_pages)
     
     for(int i = 0; i < num_pages; i++){
         mprotect(get_page_addr(psu_ds_start, i), PAGE_SIZE, PROT_NONE);
