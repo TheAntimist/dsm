@@ -50,6 +50,20 @@ public:
 	Status status = stub_->hello(&context, req, &reply);
   }
 
+
+  bool request_access(bool is_write, int page_num, 
+                      string name, int node_num){
+    AccessRequest request;
+    request.set_name(name);
+    request.set_page_num(page_num);
+    request.set_is_write(is_write);
+    request.set_node_num(node_num);
+    Empty empty;
+    ClientContext context;
+    Status status = stub_->request_access(&context, request, &empty);
+    return status.ok();   
+  }
+
   bool register_segment(string name, int num_pages) {
 	RegisterRequest request;
 	request.set_name(name);

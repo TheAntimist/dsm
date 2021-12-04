@@ -3,14 +3,23 @@ syntax = "proto3";
 package directory;
 
 service DirectoryService {
-  rpc hello(Empty) returns (Empty) {}
-  rpc register_segment(RegisterRequest) returns (Empty) {}
+    rpc hello(Empty) returns (Empty) {}
+    rpc register_segment(RegisterRequest) returns (Empty) {}
+    rpc request_access(AccessRequest) returns (Empty) {}
 }
 
 message Empty {
 }
 
+message AccessRequest {
+    bool is_write = 1;
+    int32 page_num = 2;
+    string name = 3;
+    int32 node_num = 4;
+}
+
 message RegisterRequest {
   string name = 1;
   int32 num_pages = 2;
+  int32 node_num = 3;
 }
