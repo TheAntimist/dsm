@@ -35,13 +35,13 @@ public:
   vector<tuple<vector<int>, shared_ptr<mutex>, int>> table;
   DataSegment() {
   }
-  DataSegment(int _num_pages, string _name) {
+  DataSegment(int _num_pages, int num_nodes, string _name) {
 	num_pages = _num_pages;
 	name = _name;
 	for(int i = 0; i < num_pages; i++) {
 	  vector<int> v1;
 	  // TODO: Fix this later
-	  for(int j = 0; j < 32; j++){
+	  for(int j = 0; j < num_nodes; j++){
 		v1.push_back(0);
 	  }
 
