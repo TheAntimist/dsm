@@ -23,6 +23,14 @@ using grpc::ServerContext;
 using directory::DirectoryService;
 using directory::Empty;
 using directory::RegisterRequest;
+using directory::PageRequest;
+using directory::PageData;
+using directory::PageRequestAccess;
+using directory::AccessReply;
+using directory::RegisterRequest;
+using directory::AccessRequest;
+
+
 
 class DirectoryClient {
   unique_ptr<DirectoryService::Stub> stub_;

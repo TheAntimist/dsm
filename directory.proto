@@ -5,7 +5,7 @@ package directory;
 service DirectoryService {
     rpc hello(Empty) returns (Empty) {}
     rpc register_segment(RegisterRequest) returns (Empty) {}
-    rpc request_access(AccessRequest) returns (Empty) {}
+    rpc request_access(AccessRequest) returns (AccessReply) {}
 }
 
 message Empty {
@@ -24,12 +24,19 @@ message RegisterRequest {
   int32 node_num = 3;
 }
 
+message AccessReply {
+
+  bool is_success = 1;
+  int32 page_num = 2;
+  bytes page_data = 3;
+
+}
 
 service NodeService {
     rpc invalidate_page(PageRequest) returns (Empty) {}
     rpc grant_request_access(PageRequestAccess) returns (Empty) {}
     rpc fetch_page(PageRequest) returns (PageData) {}
-    rpc revoke_write_access(PageRequest) returns (Empty) {}
+    rpc revoke_write_access(PageRequest) returns (PageData) {}
     
 }
 

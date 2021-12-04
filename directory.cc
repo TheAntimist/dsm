@@ -1,5 +1,11 @@
 #include "directory.hpp"
 
+#define INVALID_STATE 0
+#define READ_STATE 1
+#define RWRITE_STATE 2
+
+
+
 Status DirectoryImpl::register_segment(ServerContext* context,
 						const RegisterRequest* req_obj,
 						Empty* reply) override {
@@ -30,18 +36,17 @@ Status DirectoryImpl::register_segment(ServerContext* context,
 
 Status DirectoryImpl::request_access(ServerContext* context,
 									 const AccessRequest* req_obj,
-									 Empty* reply) {
+									 AccessReply* reply) {
 
-  if(req_obj->is_write()){
+  int page_num = req_obj->page_num();
+
+  if(req_obj->is_write()){//requesting read-write access
+
 	cout << "Read-Write access request from: " << req_obj->node_num() << endl;
         
-	int page_num = req_obj->page_num();
-
 	segments[req_obj->name()].table[page_num][1]->lock();
    
-	DataSegment segment = segments[req_obj->name()];
-
-	vector<int> table_data = segment.table[page_num][0];
+	vector<int> table_data = segments[req_obj->name()].table[page_num][0];
 
 	for(int i = 0; i < num_nodes; i++){
 	  if(table_data[i] == 1 and i != req_obj->node_num()){
@@ -60,32 +65,76 @@ Status DirectoryImpl::request_access(ServerContext* context,
 	}
 
 
-	segments[req_obj->name()].table[page_num][2] = 2; //Setting state to RW state
+	segments[req_obj->name()].table[page_num][2] = RWRITE_STATE; //Setting state to RW state
 
 	//TODO: Call to client RPC to ACK the change from our end.
 	        
 	segments[req_obj->name()].table = table_data;
 	segments[req_obj->name()].table[page_num][1]->unlock();
-         
+    
 
-  } else {
+    reply->set_is_success(true);
+    reply->set_page_num(page_num);
+   
+    //TODO: return correct message [success status] -- Check if above is correct??? ^^
+
+  } else {//requesting read access
+
 	cout << "[debug] Read access request from: " << req_obj->node_num()  << endl;
         
 	segments[req_obj->name()].table[page_num][1]->lock();
 
-	int request_page_num;
-        
-	if(segments[req_obj->name()].table[page_num][2] == 1){ //if page is Read Only
+	int requesting_node_num;
+    
+    vector<int> table_data = segments[req_obj->name()].table[page_num][0];
 
-	} else { //if page is Read Write
+    string page; //TODO: check if the page data type is correct
+
+	if(segments[req_obj->name()].table[page_num][2] == READ_STATE){ //if page is Read Only
+    
+        for(int i = 0; i < num_nodes; i++){
+            if(table_data[i] == 1){
+                requesting_node_num = i;
+
+                //TODO: RPC call to client/fetches page num's page data
+                page = fetch_page(requesting_node_num, page_num);
+
+                break;
+            }
+            
+        }
+
+	}
+    else{ //if page is Read Write
+
+        for(int i = 0; i < num_nodes; i++){
+            if(table_data[i] == 1){
+                requesting_node_num = i;
+                
+                //TODO: RPC call to client/fetches page num's page data
+                page = revoke_write_access(requesting_node_num, page_num);
+
+                break;
+            }
+        }
 
 	}
 
-	  segments[req_obj->name()].table[page_num][2] = 1; //Setting state to RO state
+    segments[req_obj->name()].table[page_num][0][req_obj->node_num()] = 1;	
+
+    segments[req_obj->name()].table[page_num][2] = READ_STATE; //Setting state to RO state
         
-	  segments[req_obj->name()].table[page_num][1]->unlock();
-	}
-  }
+	segments[req_obj->name()].table[page_num][1]->unlock();
+
+    reply->set_is_success(true);
+    reply->set_page_num(page_num);
+    reply->set_page_data(page);
+    
+    //TODO: return correct message [return the page contents]
+    }
+    
+    return Status::OK;
+
 }
 
 Status DirectoryImpl::hello(ServerContext* context,
