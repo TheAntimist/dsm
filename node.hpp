@@ -101,6 +101,7 @@ class Node final : public NodeService::Service {
 	struct sigaction sig = { 0 };
 	int num_pages = 0;
 	void* start_addr;
+	int self = -1;
 
 public:
 	Node() {

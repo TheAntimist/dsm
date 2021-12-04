@@ -9,13 +9,13 @@ Node::Node() {
         perror("sigaction");
         exit(EXIT_FAILURE);
     }
-    string lostHost = localHostname();
+    string actualHost = localHostname();
     ifstream infile("node_list.txt");
     string lastHost;
-    int idx = -1, self = -1;
+    int idx = -1;
     while (infile >> lastHost) {
         idx += 1;
-        if (currentHost == host) {
+        if (actualHost == host) {
 	        self = idx;
 	        continue;
 	  }
@@ -24,6 +24,7 @@ Node::Node() {
     DirectoryClient _client(grpc::CreateChannel(lastHost,
                             grpc::InsecureChannelCredentials()));
     client = _client;
+    // Wait for Directory connection.
     client.hello();
     cout << "[debug] Initialized Node with node id: " << curNode << endl;
 }
