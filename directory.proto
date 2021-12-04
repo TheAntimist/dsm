@@ -28,7 +28,7 @@ message RegisterRequest {
 service NodeService {
     rpc invalidate_page(PageRequest) returns (Empty) {}
     rpc grant_request_access(PageRequestAccess) returns (Empty) {}
-    rpc fetch_page(PageRequest) returns (Empty) {}
+    rpc fetch_page(PageRequest) returns (PageData) {}
     rpc revoke_write_access(PageRequest) returns (Empty) {}
     
 }
