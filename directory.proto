@@ -23,3 +23,27 @@ message RegisterRequest {
   int32 num_pages = 2;
   int32 node_num = 3;
 }
+
+
+service NodeService {
+    rpc invalidate_page(PageRequest) returns (Empty) {}
+    rpc grant_request_access(PageRequestAccess) returns (Empty) {}
+    rpc fetch_page(PageRequest) returns (Empty) {}
+    rpc revoke_write_access(PageRequest) returns (Empty) {}
+    
+}
+
+message PageRequestAccess {
+    int32 page_num = 1;
+    bool is_write = 2;
+}
+
+message PageData {
+    int32 page_num = 1;
+    bytes page_data = 2;
+}
+
+
+message PageRequest {
+    int32 page_num = 1;
+}
