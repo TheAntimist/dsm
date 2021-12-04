@@ -104,25 +104,89 @@ class Node final : public NodeService::Service {
 	void* start_addr;
 public:
 
-	 void invalidate_page(int page_num){
+
+    Status invalidate_page(ServerContext* context,
+                           const PageRequest* req_obj,
+                           Empty* reply) override {
+
+        int page_num = req_obj->page_num();
+        
+        void * page_addr = get_page_base_addr(req_obj->page_num());
+        mprotect(page_addr, PAGE_SIZE, PROT_NONE);
+
+        return Status::OK;
+
+    }
+
+
+    Status grant_request_access(ServerContext* context,
+                                const PageRequestAccess* req_obj, 
+                                Empty* reply) override {
+    
+        void * page_addr = get_page_base_addr(req_obj->page_num());
+        
+        if(req_obj->is_write()){
+            mprotect(page_addr, PAGE_SIZE, PROT_READ | PROT_WRITE);
+        }
+        else{
+            mprotect(page_addr, PAGE_SIZE, PROT_READ);
+        }
+
+        return Status::OK;
+
+    }
+
+
+    Status revoke_write_access(ServerContext* context, 
+                               const PageRequest* req_obj, 
+                               PageData* reply) override {
+
+
+        void * page_addr = get_page_base_addr(req_obj->page_num());
+        mprotect(page_addr, PAGE_SIZE, PROT_READ);
+        string page; 
+        memcpy(&page, page_addr, PAGE_SIZE);
+        
+        reply->set_page_num(req_obj->page_num());
+        reply->set_page_data(page); //TODO: check type for bytes/type page data
+
+        return Status::OK;
+
+    }
+
+
+    Status fetch_page(ServerContext* context, 
+                      const PageRequest* req_obj, 
+                      PageData* reply) override{
+
+        void * page_addr = get_page_base_addr(req_obj->page_num());
+        string page;
+        memcpy(&page, page_addr, PAGE_SIZE);
+        
+        reply->set_page_num(req_obj->page_num());
+        reply->set_page_data(page); //TODO: type check page data
+
+        return Status::OK;
+
+    }
+
+    
+    void* get_page_base_addr(int page_num){
+        void* page_addr = (void *) (((char *) start_addr) + PAGE_SIZE*page_num);
+        return page_addr;
+    }
+
+
+	void* get_page_addr(void *addr, int page_num){
+	    return (void*)( ((char *) addr) + PAGE_SIZE*page_num);
+    }
 	  
-	      void * addr = (void *) (((char *) start_addr) + PAGE_SIZE*page_num);
+	void * get_page_addr(void *addr){
 	  
-	      mprotect(addr, PAGE_SIZE, PROT_NONE);
-	  
-	      return;
-	  }
-	  
-	  void* get_page_addr(void *addr, int page_num){
-	      return (void*)( ((char *) addr) + PAGE_SIZE*page_num);
-	  }
-	  
-	  void * get_page_addr(void *addr){
-	  
-	      int page_num = ((int) ((((int *) addr) - ((int*) start_addr)) / PAGE_SIZE)) - 1;
+	    int page_num = ((int) ((((int *) addr) - ((int*) start_addr)) / PAGE_SIZE)) - 1;
 	      
-	      return (void *)( ((char*) addr) + PAGE_SIZE*page_num);
-	  }  
+	    return (void *)( ((char*) addr) + PAGE_SIZE*page_num);
+	}  
 	  
 	  
 	  void request_access(void* addr, bool is_write){
@@ -130,7 +194,7 @@ public:
 	      int page_num;
 	      
 	  
-	  
+	      //TODO: Type conversion as divide might be float, need to round up 
 	      if(is_default){
 	          page_num = (int) ((((int *) addr) - ((int*) start_addr)) / PAGE_SIZE) - 1;
 	      }
@@ -217,7 +281,7 @@ void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size){
 	// register_segment("default", num_pages)
     
     for(int i = 0; i < num_pages; i++){
-        mprotect(get_page_addr(psu_ds_start, i), PAGE_SIZE, PROT_NONE);
+        mprotect(get_page_addr(psu_ds_start, i), PAGE_SIZE, PROT_READ);
     }
     
 

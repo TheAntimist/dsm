@@ -9,7 +9,9 @@
 Status DirectoryImpl::register_segment(ServerContext* context,
 						const RegisterRequest* req_obj,
 						Empty* reply) override {
-   
+  
+  //TODO: initalize the table to have read-only for that node
+ 
   string name = req_obj->name();
   {
 	lock_guard<mutex> lk(num_mutex);
