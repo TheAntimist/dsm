@@ -1,4 +1,4 @@
-
+#include "directory.hpp"
 
 Status DirectoryImpl::register_segment(ServerContext* context,
 						const RegisterRequest* req_obj,
@@ -37,69 +37,53 @@ Status DirectoryImpl::request_access(ServerContext* context,
         
 	int page_num = req_obj->page_num();
 
-	segments[req_obj->name()].table[page_num][1].lock();
-
-	vector<string> invalidate;        
+	segments[req_obj->name()].table[page_num][1]->lock();
    
 	DataSegment segment = segments[req_obj->name()];
 
 	vector<int> table_data = segment.table[page_num][0];
-   
 
-
-	for(int i = 0; i < 32; i++){
+	for(int i = 0; i < num_nodes; i++){
 	  if(table_data[i] == 1 and i != req_obj->node_num()){
 		string ip;
 		string node_id = to_string(i);
 		if(i < 10){
 		  string node_id = "0" + node_id;
 		}
-		ip = "e5-cse-135-" + node_id + ".cse.psu.edu:8080";
-		invalidate.push_back(ip);
 		table_data[i] = 0;
 	  }
 	}
 	table_data[req_obj->node_num()] = 1; 
         
 	for(string ip: invalidate){
-	  //TODO: to client RPC call to invalidate
+	  //TODO: to client RPC call to invalidate. Except for req_obj->node_num()
 	}
 
 
 	segments[req_obj->name()].table[page_num][2] = 2; //Setting state to RW state
 
-	//TODO: to client RPC call ACK
-        
+	//TODO: Call to client RPC to ACK the change from our end.
+	        
 	segments[req_obj->name()].table = table_data;
-
-	segments[req_obj->name()].table[page_num][1].unlock();
+	segments[req_obj->name()].table[page_num][1]->unlock();
          
 
-  }    
-  else{
-	cout << "Read access request from: " << req_obj->node_num()  << endl;
+  } else {
+	cout << "[debug] Read access request from: " << req_obj->node_num()  << endl;
         
-	segments[req_obj->name()].table[page_num][1].lock();
+	segments[req_obj->name()].table[page_num][1]->lock();
 
 	int request_page_num;
         
 	if(segments[req_obj->name()].table[page_num][2] == 1){ //if page is Read Only
 
-	  for(int i = 0; i
+	} else { //if page is Read Write
 
-
-			}
-	  else{ //if page is Read Write
-
-
-
-	  }
-        
-
+	}
 
 	  segments[req_obj->name()].table[page_num][2] = 1; //Setting state to RO state
         
-	  segments[req_obj->name()].table[page_num][1].unlock();
+	  segments[req_obj->name()].table[page_num][1]->unlock();
 	}
   }
 }
@@ -139,8 +123,10 @@ DirectoryImpl::DirectoryImpl() {
 	//client.hello();
 	hosts.push_back(host);
   }
-    infile.close();
+  infile.close();
   hosts.pop_back();
+  num_nodes = hosts.size();
+  
   cout << "[debug] Directory node intialized with " << hosts.size()
 	   << " nodes\n";
 }
