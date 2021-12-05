@@ -24,9 +24,16 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using directory::DirectoryService;
+using directory::NodeService;
+using directory::PageRequest;
+using directory::PageRequestAccess;
+using directory::PageData;
 using directory::Empty;
 using directory::RegisterRequest;
 
+#define INVALID_STATE 0
+#define READ_STATE 1
+#define RWRITE_STATE 2
 
 class DataSegment {
 public:
@@ -40,9 +47,8 @@ public:
 	name = _name;
 	for(int i = 0; i < num_pages; i++) {
 	  vector<int> v1;
-	  // TODO: Fix this later
 	  for(int j = 0; j < num_nodes; j++){
-		v1.push_back(0);
+		  v1.push_back(READ_STATE);
 	  }
 
 	  shared_ptr<mutex> ptr(new mutex());
@@ -51,7 +57,39 @@ public:
   }
 };
 
+class NodeClient {
+  unique_ptr<NodeService::Stub> stub_;
+  shared_ptr<Channel> channel;
+public:
+  NodeClient(shared_ptr<Channel> _channel) 
+	: stub_(NodeService::NewStub(_channel)) {
+  	channel = _channel;
+  }
+
+  NodeClient(const NodeClient& other) : stub_(NodeService::NewStub(other.channel)) {
+	  channel = other.channel;
+  }
+  NodeClient& operator=(NodeClient other) {
+	  swap(channel, other.channel);
+	  stub_ = NodeService::NewStub(other.channel);
+	  return *this;
+  }
+
+  void hello() {
+    Empty req, reply;
+    ClientContext context;
+    context.set_wait_for_ready(true);
+    cout << "[debug] Sending Hello\n";
+    Status status = stub_->hello(&context, req, &reply);
+  }
+  bool invalidate_page(int page_num);
+  bool grant_request_access(int page_num, bool is_write);
+  PageData fetch_page(int page_num);
+  PageData revoke_write_access(int page_num);
+}
+
 class DirectoryImpl final : public DirectoryService::Service {
+  vector<NodeClient> nodes;
   bool is_initiated = false;
   int self;
   int num_nodes;

@@ -3,19 +3,18 @@ syntax = "proto3";
 package directory;
 
 service DirectoryService {
-    rpc hello(Empty) returns (Empty) {}
-    rpc register_segment(RegisterRequest) returns (Empty) {}
-    rpc request_access(AccessRequest) returns (AccessReply) {}
+  rpc hello(Empty) returns(Empty) {}
+  rpc register_segment(RegisterRequest) returns(Empty) {}
+  rpc request_access(AccessRequest) returns(AccessReply) {}
 }
 
-message Empty {
-}
+message Empty {}
 
 message AccessRequest {
-    bool is_write = 1;
-    int32 page_num = 2;
-    string name = 3;
-    int32 node_num = 4;
+  bool is_write = 1;
+  int32 page_num = 2;
+  string name = 3;
+  int32 node_num = 4;
 }
 
 message RegisterRequest {
@@ -25,32 +24,26 @@ message RegisterRequest {
 }
 
 message AccessReply {
-
-  bool is_success = 1;
   int32 page_num = 2;
   bytes page_data = 3;
-
 }
 
 service NodeService {
-    rpc invalidate_page(PageRequest) returns (Empty) {}
-    rpc grant_request_access(PageRequestAccess) returns (Empty) {}
-    rpc fetch_page(PageRequest) returns (PageData) {}
-    rpc revoke_write_access(PageRequest) returns (PageData) {}
-    
+  rpc hello(Empty) returns(Empty) {}
+  rpc invalidate_page(PageRequest) returns(Empty) {}
+  rpc grant_request_access(PageRequestAccess) returns(Empty) {}
+  rpc fetch_page(PageRequest) returns(PageData) {}
+  rpc revoke_write_access(PageRequest) returns(PageData) {}
 }
 
 message PageRequestAccess {
-    int32 page_num = 1;
-    bool is_write = 2;
+  int32 page_num = 1;
+  bool is_write = 2;
 }
 
 message PageData {
-    int32 page_num = 1;
-    bytes page_data = 2;
+  int32 page_num = 1;
+  bytes page_data = 2;
 }
 
-
-message PageRequest {
-    int32 page_num = 1;
-}
+message PageRequest { int32 page_num = 1; }

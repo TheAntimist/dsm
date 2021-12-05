@@ -61,7 +61,10 @@ void Node::request_access(void* addr, bool is_write){
         page_num = get_page_num(addr);
     }
 
+    cout << "Requesting page number: " << page_num << endl;
+
     //TODO: use rpc call to talk to directory
+    client.request_access(is_write, page_num, "default", self);
 
     //likely copy new page or request new page,etc,
     return;
@@ -74,19 +77,37 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
     if((((ucontext_t *)ctx)->uc_mcontext.gregs[REG_ERR]) & 0x2){
         cout << "[debug] write fault\n";
 
-        request_access(info->si_addr, true);
+        int page_num;
     
-        mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_READ | PROT_WRITE);
+        //TODO: Type conversion as divide might be float, need to round up
+        if(is_default){
+            page_num = get_page_num(info->si_addr);
+        }
 
+        cout << "Requesting page number: " << page_num << endl;
+
+        //TODO: use rpc call to talk to directory
+        client.request_access(true, page_num, "default", self);        
     
+        return;
         //send ack back to directory   
     } else {
         cout << "[debug] read fault\n";
 
-        request_access(info->si_addr, false);
+        int page_num;
+    
+        //TODO: Type conversion as divide might be float, need to round up
+        if(is_default){
+            page_num = get_page_num(info->si_addr);
+        }
+        cout << "Requesting page number: " << page_num << endl;
 
+        AccessReply reply = client.request_access(false, page_num, "default", self);
+        
+        mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_WRITE);
+        memcpy(get_page_addr(info->si_addr), &reply.page_data, PAGE_SIZE);
         mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_READ);
-        //send ack back to directory
+        return;
     }
 }
 
@@ -94,23 +115,12 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
 Status Node::invalidate_page(ServerContext* context,
                            const PageRequest* req_obj,
                            Empty* reply) {
-        void * addr = (void *) (((char *) start_addr) + PAGE_SIZE*page_num);
-        mprotect(addr, PAGE_SIZE, PROT_NONE);
-
-
     int page_num = req_obj->page_num();
-        return;
-
-    }
+    
     void * page_addr = get_page_base_addr(req_obj->page_num());
-
     mprotect(page_addr, PAGE_SIZE, PROT_NONE);
-    void* get_page_addr(void *addr, int page_num){
 
-        return (void*)( ((char *) addr) + PAGE_SIZE*page_num);
     return Status::OK;
-    }
-
 }
 
 
@@ -174,8 +184,8 @@ void Node::register_datasegment(void * psu_ds_start, size_t psu_ds_size) {
     start_addr = psu_ds_start;
 
     //rpc call to directory node to register segment
-	// TODO:
-	// register_segment("default", num_pages)
+
+    client.register_segment("default", num_pages);
     
     for(int i = 0; i < num_pages; i++){
         mprotect(get_page_addr(psu_ds_start, i), PAGE_SIZE, PROT_READ);
