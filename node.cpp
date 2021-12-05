@@ -9,13 +9,146 @@ string localHostname() {
   return string(buffer) + string(":8080");
 }
 
+void Lock::enterCS() {
+	lock_guard<mutex> lk(cvMutex);
+	requestingCS = true;
+	maxSeqNo = highestSeqNo + 1;
+}
+
+void Lock::exitCS() {
+	{
+		lock_guard<mutex> lk(cvMutex);
+		requestingCS = false;
+	}
+	cv.notify_all();
+}
+
+
+void Lock::waitUntilNotExecuting(int k, int nodeid, int self) {
+	// Acquire Lock
+	unique_lock<mutex> lk(cvMutex);
+	if (requestingCS &&
+		((k > maxSeqNo) ||
+		(k == maxSeqNo && nodeid > self))) {
+	  cout << "[debug] Waiting on the Condition Variable.\n";
+		cv.wait(lk, [=](){return !requestingCS;});
+	}
+	// Unlock on return
+}
+
+LockReply NodeClient::request_lock(LockRequest request) {
+	LockReply reply;
+	ClientContext context;
+	Status status = stub_->request_lock(&context, request, &reply);
+
+    // Act upon its status.
+    if (!status.ok()) {
+      cout << status.error_code() << ": " << status.error_message()
+           << endl;
+    }
+    return reply;
+  }
+
+bool NodeClient::reply_lock(LockRequest request) {
+	Empty empty;	
+	ClientContext context;
+	Status status = stub_->reply_lock(&context, request, &empty);
+    return status.ok();
+}
+
+void waitForRequest(NodeClient client, LockRequest reqObj) {
+	client.request_lock(reqObj);
+}
+
+void waitForReply(NodeClient client, LockRequest reqObj) {
+	client.reply_lock(reqObj);
+}
+
+void Node::init_locks(vector<NodeClient> _nodes) {
+    nodes = _nodes;
+}
+
+void Node::lock_enter_cs(int lockno) {
+    cout << "[debug] Sending Request to all nodes\n";
+	// Send a request to all conns.
+	auto lock = lockMap[lockno];
+	lock->enterCS();
+
+	// Build request for GRPC
+	LockRequest request;
+	request.set_lockno(lockno);
+	request.set_seqno(lock->maxSeqNo);
+	request.set_nodeid(self);
+
+	vector<thread> threads;
+	for(auto client : nodes) {
+		threads.emplace_back(thread(waitForRequest, client, request));
+	}
+
+	//wait for the replies
+	for (auto& th : threads)
+		th.join();
+
+	cout << "[debug] Reply received from all. Entering CS.\n";
+}
+
+void Node::lock_exit_cs(int lockno) {
+    auto lock = lockMap[lockno];
+    // Update Lock and Notify all waiting requests
+	lock->exitCS();
+
+	cout << "[debug] Exited CS and sending Replies.\n";
+	// Build request for GRPC
+	LockRequest request;
+	request.set_lockno(lockno);
+	request.set_seqno(lock->maxSeqNo);
+	request.set_nodeid(self);
+
+	// Threads to handle replies. No need to wait.
+	for(auto client : nodes) {
+		thread t(waitForReply, client, request);
+		t.detach();
+	}
+}
+
+Status Node::request_lock(ServerContext* context,
+			const LockRequest* reqObj, LockReply* reply) {
+	auto lock = lockMap[reqObj->lockno()];
+	int ourSeqNo = lock->maxSeqNo,
+	k = reqObj->seqno();
+
+	cout << "[debug] Received Request from: " << reqObj->nodeid() 
+		 << endl;
+	if (k > lock->highestSeqNo) {
+		lock->highestSeqNo = k;
+	}
+
+	// Defer until we are done with the CS
+	lock->waitUntilNotExecuting(k, reqObj->nodeid(), self);
+	cout << "[debug] Providing access to the CS for node: "
+		<< reqObj->nodeid() << endl;
+	// Give up access to the Critical Section
+	reply->set_lockno(reqObj->lockno());
+	reply->set_seqno(ourSeqNo);
+	reply->set_nodeid(self);
+
+	return Status::OK;
+}
+
+Status Node::reply_lock(ServerContext* context,
+			const LockRequest* reqObj,
+			Empty* reply) {
+	cout << "[debug] Received Reply from: " << reqObj->nodeid() << endl;
+	// Do nothing, since we just wait for responses.
+	return Status::OK;
+}
+
 Node Node::instance;
 
 Node::Node() {
     memset(&sig, 0, sizeof(sig));
 
     thread t(&Node::startServer, this);
-    //t.detach();
     server_thread = move(t);
     
     string actualHost = localHostname();
@@ -104,7 +237,7 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
 
         AccessReply reply = client.request_access(true, page_num, "default", self);        
 
-        //TODO: Do Later, get the new page!!! 
+        //TODO: Do Later, get the new page!!!
         return;
     } else {
         cout << "[debug] read fault\n";

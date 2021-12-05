@@ -25,6 +25,9 @@ p3: directory.pb.o directory.grpc.pb.o node.o p3.o
 node: directory.pb.o directory.grpc.pb.o node.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+merge: directory.pb.o directory.grpc.pb.o node.o psu_lock.o app1.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 dir: directory
 
 directory: directory.pb.o directory.grpc.pb.o directory.o
@@ -43,4 +46,4 @@ dsm: directory.pb.o directory.grpc.pb.o d_node.o dsm.o
 	protoc --cpp_out=. $<
 
 clean:
-	rm -f *.o *.pb.cc *.pb.h build
+	rm -fv *.o *.pb.cc *.pb.h directory p1 p2 p3
