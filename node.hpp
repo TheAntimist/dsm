@@ -109,9 +109,11 @@ class Node final : public NodeService::Service {
 	int num_pages = 0;
 	void* start_addr;
 	int self = -1;
+	shared_ptr<thread> server_thread;
 
 public:
 	Node();
+	~Node();
 	
 	bool is_inited() { return is_init; }
 	void init();

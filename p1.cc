@@ -21,6 +21,5 @@ int main(int argc, char* argv[])
 	//cout << b << endl;
 
 	cout << "Success for P1" << endl;
-	while(true);
 	return 0;
 }

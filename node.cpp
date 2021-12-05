@@ -16,6 +16,8 @@ Node::Node() {
 
     thread t(&Node::startServer, this);
     t.detach();
+    shared_ptr<thread> tptr(&t);
+    server_thread = tptr;
 
     string actualHost = localHostname();
     ifstream infile("node_list.txt");
@@ -36,6 +38,10 @@ Node::Node() {
     // Wait for Directory connection.
     client.hello();
     cout << "[debug] Initialized Node with node id: " << self << endl;
+}
+
+Node::~Node() {
+	tptr->join();
 }
 
 void Node::startServer() {

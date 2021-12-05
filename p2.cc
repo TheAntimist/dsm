@@ -17,6 +17,5 @@ int main(int argc, char* argv[])
 	cout << "Came out of while loop" << endl;
 	b = 1;
     cout << "Program 2 success!" << endl;
-    while(true);
 	return 0;
 }
