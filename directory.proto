@@ -34,6 +34,9 @@ service NodeService {
   rpc grant_request_access(PageRequestAccess) returns(Empty) {}
   rpc fetch_page(PageRequest) returns(PageData) {}
   rpc revoke_write_access(PageRequest) returns(PageData) {}
+
+  rpc request_lock(LockRequest) returns (LockReply) {}
+  rpc reply_lock(LockRequest) returns (Empty) {}
 }
 
 message PageRequestAccess {
@@ -47,3 +50,15 @@ message PageData {
 }
 
 message PageRequest { int32 page_num = 1; }
+
+message LockRequest {
+    int32 lockNo = 1;
+    int32 seqNo = 2;
+    int32 nodeId = 3;
+}
+
+message LockReply {
+    int32 lockNo = 1;
+    int32 seqNo = 2;
+    int32 nodeId = 3;
+}
