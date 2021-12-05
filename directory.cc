@@ -1,10 +1,8 @@
 #include "directory.hpp"
 
-
-
 bool NodeClient::invalidate_page(int page_num) {
     PageRequest req;
-    req->set_page_num(page_num);
+    req.set_page_num(page_num);
 
     Empty reply;
     ClientContext context;
@@ -14,8 +12,8 @@ bool NodeClient::invalidate_page(int page_num) {
 
 bool NodeClient::grant_request_access(int page_num, bool is_write) {
     PageRequestAccess req;
-    req->set_page_num(page_num);
-    req->set_is_write(is_write);
+    req.set_page_num(page_num);
+    req.set_is_write(is_write);
 
     Empty reply;
     ClientContext context;
@@ -25,7 +23,7 @@ bool NodeClient::grant_request_access(int page_num, bool is_write) {
 
 PageData NodeClient::fetch_page(int page_num) {
     PageRequest req;
-    req->set_page_num(page_num);
+    req.set_page_num(page_num);
 
     PageData reply;
     ClientContext context;
@@ -35,7 +33,7 @@ PageData NodeClient::fetch_page(int page_num) {
 
 PageData NodeClient::revoke_write_access(int page_num) {
     PageRequest req;
-    req->set_page_num(page_num);
+    req.set_page_num(page_num);
 
     PageData reply;
     ClientContext context;
@@ -45,25 +43,25 @@ PageData NodeClient::revoke_write_access(int page_num) {
 
 Status DirectoryImpl::register_segment(ServerContext* context,
 						const RegisterRequest* req_obj,
-						Empty* reply) override {
+						Empty* reply) {
   string name = req_obj->name();
   {
     lock_guard<mutex> lk(num_mutex);
-    num_nodes--;
+    pending_nodes--;
     if (!is_initiated && segments.find(name) == segments.end()) {
-      DataSegment segment(req_obj->num_pages(), name);
+      DataSegment segment(req_obj->num_pages(), num_nodes, name);
       segments.insert(make_pair(name, segment));
       is_initiated = true;
     }
   }
 
   unique_lock<mutex> lk(num_mutex);
-  if (num_nodes != 0) {
-	cout << "[debug] Waiting for other nodes to finish registering.\n";
-	cv.wait(lk, [=](){return num_nodes == 0;});
+  if (pending_nodes != 0) {
+	  cout << "[debug] Waiting for other nodes to finish registering.\n";
+	  cv.wait(lk, [=](){return pending_nodes == 0;});
   } else {
-	cout << "[debug] All registered. Resuming now..\n";
-	cv.notify_all();
+	  cout << "[debug] All registered. Resuming now..\n";
+	  cv.notify_all();
   }
   return Status::OK;
 }
@@ -75,89 +73,96 @@ Status DirectoryImpl::request_access(ServerContext* context,
 									 AccessReply* reply) {
 
   int page_num = req_obj->page_num();
+  int node_num = req_obj->node_num();
+  string name = req_obj->name();
 
   if(req_obj->is_write()){//requesting read-write access
 
-	cout << "Read-Write access request from: " << req_obj->node_num() << endl;
-        
-	segments[req_obj->name()].table[page_num][1]->lock();
-   
-	vector<int> table_data = segments[req_obj->name()].table[page_num][0];
+      cout << "Read-Write access request from: " << node_num << endl;
+            
+      segments[name].lock(page_num);
+      
+      vector<int> table_data = segments[name].get_access(page_num);
 
-	for(int i = 0; i < num_nodes; i++){
-	  if(table_data[i] == 1 and i != req_obj->node_num()){
-      nodes[i].invalidate_page(page_num);
-      table_data[i] = 0;
-    }
-	}
-	table_data[req_obj->node_num()] = 1; //Explicitly give that node access
-        
-	segments[req_obj->name()].table[page_num][2] = RWRITE_STATE; //Setting state to RW state
+      cout << "Going through table_data" << endl;
 
-	nodes[req_obj->node_num()].grant_request_access(page_num, true);
-	        
-	segments[req_obj->name()].table = table_data;
-	segments[req_obj->name()].table[page_num][1]->unlock();
-    
-  reply->set_page_num(page_num);
+      for(int i = 0; i < num_nodes; i++) {
+        if(table_data[i] == 1 and i != node_num){
+          cout << "[debug] Invalidating node: " << i << endl;
+          nodes[i].invalidate_page(page_num);
+          table_data[i] = 0;
+        }
+      }
+      table_data[node_num] = 1; //Explicitly give that node access
+
+      segments[name].set_state(page_num, RWRITE_STATE); //Setting state to RW state
+
+      cout << "Set the state" << endl;
+
+      nodes[node_num].grant_request_access(page_num, true);
+
+      cout << "Granted request acccess" << endl;
+              
+      segments[name].set_access(page_num, table_data);
+      segments[name].unlock(page_num);
+        
+      reply->set_page_num(page_num);
    
   } else {//requesting read access
 
-	cout << "[debug] Read access request from: " << req_obj->node_num()  << endl;
+      cout << "[debug] Read access request from: " << node_num  << endl;
+            
+      segments[name].lock(page_num);
+
+      vector<int> table_data = segments[name].get_access(page_num);
+
+      string page; //TODO: check if the page data type is correct
+
+      if(segments[name].get_state(page_num) == READ_STATE) { //if page is Read Only
         
-	segments[req_obj->name()].table[page_num][1]->lock();
-
-	int requesting_node_num;
-    
-  vector<int> table_data = segments[req_obj->name()].table[page_num][0];
-
-  string page; //TODO: check if the page data type is correct
-
-	if(segments[req_obj->name()].table[page_num][2] == READ_STATE){ //if page is Read Only
-    
-        for(int i = 0; i < num_nodes; i++){
-            if(table_data[i] == 1){
-            
-                PageData page_d = nodes[i].fetch_page(page_num);
-                page = page_d->page_data();
-                break;
+            for(int i = 0; i < num_nodes; i++){
+                if(table_data[i] == 1){
+                
+                    PageData page_d = nodes[i].fetch_page(page_num);
+                    page = page_d.page_data();
+                    break;
+                }
+                
             }
-            
-        }
 
-	} else{ //if page is Read Write
+      } else{ //if page is Read Write
 
-        for(int i = 0; i < num_nodes; i++){
-            if(table_data[i] == 1){                
-                //TODO: RPC call to client/fetches page num's page data
-
-                page = revoke_write_access(requesting_node_num, page_num);
-
-                break;
+            for(int i = 0; i < num_nodes; i++){
+                if(table_data[i] == 1){
+              
+                    PageData page_d = nodes[i].revoke_write_access(page_num);
+                    page = page_d.page_data();
+                    break;
+                }
             }
-        }
 
-	}
+      }
 
-  segments[req_obj->name()].table[page_num][0][req_obj->node_num()] = 1;	
+      segments[name].get_access(page_num)[node_num] = 1;	
 
-  segments[req_obj->name()].table[page_num][2] = READ_STATE; //Setting state to RO state
-      
-  segments[req_obj->name()].table[page_num][1]->unlock();
+      segments[name].set_state(page_num, READ_STATE); //Setting state to RO state
+          
+      segments[name].unlock(page_num);
 
-  reply->set_page_num(page_num);
-  reply->set_page_data(page);
-    
-    //TODO: return correct message [return the page contents]
+      reply->set_page_num(page_num);
+      reply->set_page_data(page);
+        
   }
     
+    cout << "Returning back to signal handler" << endl;
+
     return Status::OK;
 
 }
 
 Status DirectoryImpl::hello(ServerContext* context,
 			 const Empty* reqObj,
-			 Empty* reply) override {
+			 Empty* reply) {
   cout << "[debug] Got Hello\n";
   return Status::OK;              	
 }
@@ -182,7 +187,7 @@ DirectoryImpl::DirectoryImpl() {
   cout << "Initializing the directory node" << endl;
 
   ifstream infile("node_list.txt");
-  string currentHost = localHostname();
+  string currentHost = localHostname(), host;
   vector<string> hosts;
   while (infile >> host) {
     hosts.push_back(host);
@@ -196,7 +201,7 @@ DirectoryImpl::DirectoryImpl() {
     client.hello();
     nodes.push_back(client);
   }
-  num_nodes = hosts.size();
+  pending_nodes = num_nodes = hosts.size();
   
   cout << "[debug] Directory node intialized with " << hosts.size()
 	   << " nodes\n";

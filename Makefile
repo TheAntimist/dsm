@@ -14,12 +14,16 @@ export PKG_CONFIG_PATH=PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
 
 all: build
 
-client: directory.pb.o directory.grpc.pb.o test.o
+p1: directory.pb.o directory.grpc.pb.o node.o p1.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-server: directory.pb.o directory.grpc.pb.o test_server.o
+node: directory.pb.o directory.grpc.pb.o node.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+dir: directory
+
+directory: directory.pb.o directory.grpc.pb.o directory.o
+	$(CXX) $^ $(LDFLAGS) -o $@
 
 build: rpc.pb.o rpc.grpc.pb.o node.o rpc_sim.o
 	$(CXX) $^ $(LDFLAGS) -o $@

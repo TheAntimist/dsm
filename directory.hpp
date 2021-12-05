@@ -8,6 +8,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <unistd.h>
+#include <tuple>
 
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
@@ -30,30 +31,77 @@ using directory::PageRequestAccess;
 using directory::PageData;
 using directory::Empty;
 using directory::RegisterRequest;
+using directory::AccessRequest;
+using directory::AccessReply;
 
 #define INVALID_STATE 0
 #define READ_STATE 1
 #define RWRITE_STATE 2
 
+string localHostname() {
+  char buffer[100];
+  int ret;
+  if ((ret = gethostname(buffer, sizeof(buffer))) == -1) {
+    return "";
+  }
+  return string(buffer) + string(":8080");
+}
+
+class DataRow {
+public:
+  vector<int> access;
+  shared_ptr<mutex> mut_lock;
+  int state;
+};
+
 class DataSegment {
 public:
   string name;
   int num_pages;
-  vector<tuple<vector<int>, shared_ptr<mutex>, int>> table;
+  vector<DataRow> table;
   DataSegment() {
   }
-  DataSegment(int _num_pages, int num_nodes, string _name) {
-	num_pages = _num_pages;
-	name = _name;
-	for(int i = 0; i < num_pages; i++) {
-	  vector<int> v1;
-	  for(int j = 0; j < num_nodes; j++){
-		  v1.push_back(READ_STATE);
-	  }
 
-	  shared_ptr<mutex> ptr(new mutex());
-	  table.push_back(make_tuple(v1, ptr, -1));
-	}
+  DataSegment(int _num_pages, int num_nodes, string _name) {
+    num_pages = _num_pages;
+    name = _name;
+    for(int i = 0; i < num_pages; i++) {
+      DataRow row;
+      vector<int> v1;
+      for(int j = 0; j < num_nodes; j++){
+        v1.push_back(READ_STATE);
+      }
+      shared_ptr<mutex> ptr(new mutex());
+
+      row.access = v1;
+      row.mut_lock = ptr;
+      row.state = READ_STATE;
+
+      table.push_back(row);
+    }
+  }
+  void lock(int page_num) {
+    table[page_num].mut_lock->lock();
+  }
+
+  void unlock(int page_num) {
+    table[page_num].mut_lock->unlock();
+  }
+
+  vector<int> get_access(int page_num) {
+    return table[page_num].access;
+  }
+
+  void set_access(int page_num, vector<int> _access) {
+    table[page_num].access = _access;
+  }
+
+  void set_state(int page_num, int state) {
+    table[page_num].state = state;
+  }
+
+  int get_state(int page_num) {
+    return table[page_num].state;
   }
 };
 
@@ -86,13 +134,13 @@ public:
   bool grant_request_access(int page_num, bool is_write);
   PageData fetch_page(int page_num);
   PageData revoke_write_access(int page_num);
-}
+};
 
 class DirectoryImpl final : public DirectoryService::Service {
   vector<NodeClient> nodes;
   bool is_initiated = false;
   int self;
-  int num_nodes;
+  int num_nodes, pending_nodes;
   mutex num_mutex;
   unordered_map<string, DataSegment> segments;
   condition_variable cv;
@@ -108,7 +156,7 @@ public:
 
   Status request_access(ServerContext* context,
                         const AccessRequest* req_obj,
-                        Empty* reply) override;
+                        AccessReply* reply) override;
 
   Status hello(ServerContext* context,
 			   const Empty* reqObj,

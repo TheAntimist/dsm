@@ -9,10 +9,13 @@
 #include <unistd.h>
 
 #include <grpcpp/grpcpp.h>
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
+#include <grpcpp/health_check_service_interface.h>
 
 #include "directory.grpc.pb.h"
 
-#define __USE_GNU
+//#define __USE_GNU
+
 #include <ucontext.h>
 #include <iostream>
 #include <signal.h>
@@ -39,12 +42,15 @@ using directory::PageRequestAccess;
 using directory::AccessReply;
 using directory::RegisterRequest;
 using directory::AccessRequest;
+using directory::NodeService;
 
+string localHostname();
 
 class DirectoryClient {
   unique_ptr<DirectoryService::Stub> stub_;
   shared_ptr<Channel> channel;
 public:
+  DirectoryClient() {}
   DirectoryClient(shared_ptr<Channel> _channel) 
 	: stub_(DirectoryService::NewStub(_channel)){
 	channel = _channel;
@@ -54,7 +60,8 @@ public:
 	channel = other.channel;
   }
   DirectoryClient& operator=(DirectoryClient other) {
-	swap(channel, other.channel);
+	//cout << "[debug] Channels: " << channel << " "<< other.channel << endl;
+	channel = other.channel;
 	stub_ = DirectoryService::NewStub(other.channel);
 	return *this;
   }
@@ -98,19 +105,36 @@ class Node final : public NodeService::Service {
 	DirectoryClient client;
 	bool is_init = false;
 	bool is_default = false;
-	struct sigaction sig = { 0 };
+	struct sigaction sig;
 	int num_pages = 0;
 	void* start_addr;
 	int self = -1;
 
 public:
-	Node() {
-		
-	}
+	Node();
 	
+	bool is_inited() { return is_init; }
+	void init();
+	void startServer();
 	int get_page_num(void * addr);
 
-	void invalidate_page(int page_num);
+	Status invalidate_page(ServerContext* context,
+                           const PageRequest* req_obj,
+                           Empty* reply) override;
+	Status grant_request_access(ServerContext* context,
+                            const PageRequestAccess* req_obj, 
+                            Empty* reply) override;
+	Status revoke_write_access(ServerContext* context, 
+                            const PageRequest* req_obj, 
+                            PageData* reply) override;
+	Status fetch_page(ServerContext* context, 
+                    const PageRequest* req_obj, 
+                    PageData* reply) override;
+
+	void* get_page_base_addr(int page_num) {
+		void* page_addr = (void *) (((char *) start_addr) + PAGE_SIZE*page_num);
+		return page_addr;
+	}
 
 	void* get_page_addr(void *addr, int page_num);
 
@@ -122,9 +146,10 @@ public:
 
 	void register_datasegment(void * psu_ds_start, size_t psu_ds_size);
 
-	static Node* instance;
+	static Node instance;
 	static void wrap_signal_handler(int sig, siginfo_t *info, void *ctx) {
-		instance->sighandler(sig, info, ctx);
-	}
-	
-}
+		instance.sighandler(sig, info, ctx);
+	}	
+};
+
+void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size);
