@@ -15,10 +15,9 @@ Node::Node() {
     memset(&sig, 0, sizeof(sig));
 
     thread t(&Node::startServer, this);
-    t.detach();
-    shared_ptr<thread> tptr(&t);
-    server_thread = tptr;
-
+    //t.detach();
+    server_thread = move(t);
+    
     string actualHost = localHostname();
     ifstream infile("node_list.txt");
     string lastHost;
@@ -41,7 +40,8 @@ Node::Node() {
 }
 
 Node::~Node() {
-	tptr->join();
+	cout << "[info] Application ended. Blocking with server thread.\n";
+	server_thread.join();
 }
 
 void Node::startServer() {
