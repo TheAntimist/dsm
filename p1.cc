@@ -10,6 +10,8 @@ int c __attribute__ ((aligned (4096)));
 
 int main(int argc, char* argv[])
 {
+    printf("Address of a is: %x\n", &a);
+    printf("Address of b is: %x\n", &b);
 	psu_dsm_register_datasegment(&a, 4096*2);
 	a = 1;
 	//cout << a << endl;

@@ -1,3 +1,4 @@
+e5-cse-135-04.cse.psu.edu:8080
 e5-cse-135-05.cse.psu.edu:8080
 e5-cse-135-06.cse.psu.edu:8080
 e5-cse-135-07.cse.psu.edu:8080

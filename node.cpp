@@ -71,14 +71,14 @@ int Node::get_page_num(void * addr) {
 }
 
 void* Node::get_page_addr(void *addr, int page_num) {
-    return (void*)( ((char *) addr) + PAGE_SIZE*page_num);
+    return (void*)( ((char *) start_addr) + PAGE_SIZE*page_num);
 }
 
 void * Node::get_page_addr(void *addr){
 
-    int page_num = ((int) ((((char *) addr) - ((char *) start_addr)) / PAGE_SIZE)) - 1;
+    int page_num = ((int) ((((char *) addr) - ((char  *) start_addr)) / PAGE_SIZE));
 
-    return (void *)( ((char*) addr) + PAGE_SIZE*page_num);
+    return (void *)( ((char*) start_addr) + PAGE_SIZE*page_num);
 }
 
 void Node::sighandler(int sig, siginfo_t *info, void *ctx){
@@ -111,11 +111,18 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
         cout << "Requesting page number: " << page_num << endl;
 
         AccessReply reply = client.request_access(false, page_num, "default", self);
-        
+       
+         
         mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_WRITE);
+        cout << "Changing page protecting to write only" << endl;   
         const char* p_data = reply.page_data().c_str();
-        memcpy(get_page_addr(info->si_addr), &(p_data), PAGE_SIZE);
+        cout << "Did the p_data conversion" << endl;
+        void * base_addr = get_page_addr(info->si_addr);
+        printf("Base address of the page is: %x\n", base_addr);
+        memcpy(base_addr, p_data, PAGE_SIZE);
+        cout << "Memcopying to the p_data" << endl;
         mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_READ);
+        cout << "Changed permission to read only" << endl;
         return;
     }
 }
@@ -132,7 +139,7 @@ Status Node::invalidate_page(ServerContext* context,
     void * page_addr = get_page_base_addr(req_obj->page_num());
     mprotect(page_addr, PAGE_SIZE, PROT_NONE);
 
-    cout << "Invalidating page num" << req_obj->page_num() << endl;
+    cout << "Invalidating page num: " << req_obj->page_num() << endl;
 
     return Status::OK;
 }
@@ -164,7 +171,7 @@ Status Node::revoke_write_access(ServerContext* context,
                             const PageRequest* req_obj, 
                             PageData* reply) {
 
-    cout << "Received to revoke write_access to page_num" << req_obj->page_num() << endl;
+    cout << "Received to revoke write_access to page_num: " << req_obj->page_num() << endl;
 
     void * page_addr = get_page_base_addr(req_obj->page_num());
     
@@ -192,7 +199,7 @@ Status Node::fetch_page(ServerContext* context,
                     const PageRequest* req_obj, 
                     PageData* reply) {
 
-    cout << "Received to revoke write_access to page_num" << req_obj->page_num() << endl;
+    cout << "Received to fetch page to page_num: " << req_obj->page_num() << endl;
 
     void * page_addr = get_page_base_addr(req_obj->page_num());
     

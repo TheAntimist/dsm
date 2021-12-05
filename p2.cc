@@ -10,11 +10,13 @@ int c __attribute__ ((aligned (4096)));
 
 int main(int argc, char* argv[])
 {
-
+    printf("a address: %x\n", &a);
+    printf("b address: %x\n", &b);
 	psu_dsm_register_datasegment(&a, 4096*2);
 	while (a == 0);
 	cout << "Came out of while loop" << endl;
 	b = 1;
-
+    cout << "Program 2 success!" << endl;
+    while(true);
 	return 0;
 }
