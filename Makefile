@@ -17,6 +17,11 @@ all: build
 p1: directory.pb.o directory.grpc.pb.o node.o p1.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+p2: directory.pb.o directory.grpc.pb.o node.o p2.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+p3: directory.pb.o directory.grpc.pb.o node.o p3.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 node: directory.pb.o directory.grpc.pb.o node.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 

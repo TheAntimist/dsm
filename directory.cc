@@ -78,9 +78,10 @@ Status DirectoryImpl::request_access(ServerContext* context,
 
   if(req_obj->is_write()){//requesting read-write access
 
-      cout << "Read-Write access request from: " << node_num << endl;
             
       segments[name].lock(page_num);
+
+      cout << "Read-Write access request from: " << node_num << endl;
       
       vector<int> table_data = segments[name].get_access(page_num);
 
@@ -101,7 +102,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
 
       nodes[node_num].grant_request_access(page_num, true);
 
-      cout << "Granted request acccess" << endl;
+      cout << "Granted request acccess for node: " << node_num << endl;
               
       segments[name].set_access(page_num, table_data);
       segments[name].unlock(page_num);
@@ -110,16 +111,17 @@ Status DirectoryImpl::request_access(ServerContext* context,
    
   } else {//requesting read access
 
-      cout << "[debug] Read access request from: " << node_num  << endl;
             
       segments[name].lock(page_num);
+
+      cout << "[debug] Read access request from: " << node_num  << endl;
 
       vector<int> table_data = segments[name].get_access(page_num);
 
       string page; //TODO: check if the page data type is correct
 
       if(segments[name].get_state(page_num) == READ_STATE) { //if page is Read Only
-        
+            cout << "Page found to be in READ_STATE" << endl;
             for(int i = 0; i < num_nodes; i++){
                 if(table_data[i] == 1){
                 
@@ -131,11 +133,12 @@ Status DirectoryImpl::request_access(ServerContext* context,
             }
 
       } else{ //if page is Read Write
-
+            cout << "Page found to be in READ_WRITE_STATE" << endl;
             for(int i = 0; i < num_nodes; i++){
                 if(table_data[i] == 1){
-              
+                    cout << "Asking to revoke access from node: " << i << endl;
                     PageData page_d = nodes[i].revoke_write_access(page_num);
+                    cout << "Received page data from node: " << i << endl;
                     page = page_d.page_data();
                     break;
                 }
@@ -154,7 +157,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
         
   }
     
-    cout << "Returning back to signal handler" << endl;
+    cout << "Returning back to signal handler to: " <<  node_num <<endl;
 
     return Status::OK;
 

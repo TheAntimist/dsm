@@ -124,10 +124,15 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
 Status Node::invalidate_page(ServerContext* context,
                            const PageRequest* req_obj,
                            Empty* reply) {
+
+
+    
     int page_num = req_obj->page_num();
     
     void * page_addr = get_page_base_addr(req_obj->page_num());
     mprotect(page_addr, PAGE_SIZE, PROT_NONE);
+
+    cout << "Invalidating page num" << req_obj->page_num() << endl;
 
     return Status::OK;
 }
@@ -140,11 +145,15 @@ Status Node::grant_request_access(ServerContext* context,
     void * page_addr = get_page_base_addr(req_obj->page_num());
 
     if(req_obj->is_write()){
+        cout << "Granting write access" << endl;
         mprotect(page_addr, PAGE_SIZE, PROT_READ | PROT_WRITE);
     }
     else{
+        cout << "Granting read access" << endl;
         mprotect(page_addr, PAGE_SIZE, PROT_READ);
     }
+
+    cout << "Granting request access locally to page num: " << req_obj->page_num() << endl;
 
     return Status::OK;
 
@@ -155,17 +164,24 @@ Status Node::revoke_write_access(ServerContext* context,
                             const PageRequest* req_obj, 
                             PageData* reply) {
 
+    cout << "Received to revoke write_access to page_num" << req_obj->page_num() << endl;
 
     void * page_addr = get_page_base_addr(req_obj->page_num());
     
+    cout << "Changing permissions to given page" << endl;
+
     mprotect(page_addr, PAGE_SIZE, PROT_READ);
     
     char* page = new char[PAGE_SIZE];
     memcpy(page, page_addr, PAGE_SIZE);
     string page_data(page, PAGE_SIZE);
 
+    cout << "Copying page data to reply object" << endl;
+
     reply->set_page_num(req_obj->page_num());
     reply->set_page_data(page_data); //TODO: check type for bytes/type page data
+
+    cout << "Revoked write access" << endl;
 
     return Status::OK;
 
@@ -176,8 +192,12 @@ Status Node::fetch_page(ServerContext* context,
                     const PageRequest* req_obj, 
                     PageData* reply) {
 
+    cout << "Received to revoke write_access to page_num" << req_obj->page_num() << endl;
+
     void * page_addr = get_page_base_addr(req_obj->page_num());
     
+    cout << "Copying page data" << endl;
+
     char* page = new char[PAGE_SIZE];
     memcpy(page, page_addr, PAGE_SIZE);
     string page_data(page, PAGE_SIZE);
