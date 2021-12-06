@@ -11,6 +11,7 @@ using namespace std;
 #define COUNT 4*4096
 int global_array[COUNT] __attribute__ ((aligned (4096)));
 int partition_num[1024] __attribute__ ((aligned (4096)));
+int c                   __attribute__ ((aligned (4096)));
 
 int logbase2(int n);
 int partition_num_func(int id, int level, int num);
@@ -19,11 +20,23 @@ void merge(int process_num, int total_processes_num);
 
 void wait_partition(int a)
 {
+    cout << "Value of a before locks is: " << a << endl;
+    int part;
 	psu_mutex_lock(0);
+//    cout << "Value of parititon_num before: " << partition_num[a] << endl;
 	partition_num[a]++;
+    cout << "Value after is: " << partition_num[a] << endl;
+    part = partition_num[a];
 	psu_mutex_unlock(0);
-	
+
+    cout << "Value of a after locks is: " << a << endl;	
+    cout << "Value of part_num is " << part << endl;
+
 	while(partition_num[a] < 2);
+
+    cout << "Ankush is a success!!" << endl;
+    
+    //while(true);
 
 	return;
 }
@@ -91,6 +104,7 @@ int main(int argc, char* argv[])
 			std::cout<<global_array[i]<<"\n";
 			//CAT it to a file
 	}
+    cout << "Success, finished!" << endl;
 	return 0;
 }
 

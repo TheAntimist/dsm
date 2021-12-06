@@ -209,9 +209,6 @@ int Node::get_page_num(void * addr) {
     return page_num;
 }
 
-void* Node::get_page_addr(void *addr, int page_num) {
-    return (void*)( ((char *) start_addr) + PAGE_SIZE*page_num);
-}
 
 void * Node::get_page_addr(void *addr){
 
@@ -235,9 +232,8 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
 
         cout << "Requesting page number: " << page_num << endl;
 
-        AccessReply reply = client.request_access(true, page_num, "default", self);        
+        AccessReply reply = client.request_access(true, page_num, "default", self);       
 
-        //TODO: Do Later, get the new page!!!
         return;
     } else {
         cout << "[debug] read fault\n";
@@ -291,11 +287,17 @@ Status Node::grant_request_access(ServerContext* context,
     void * page_addr = get_page_base_addr(req_obj->page_num());
 
     if(req_obj->is_write()){
-        cout << "Granting write access" << endl;
+        cout << "Granting write access to page num: " << req_obj->page_num()  << endl;
         mprotect(page_addr, PAGE_SIZE, PROT_READ | PROT_WRITE);
+        if(req_obj->page_data().size() != 0){
+            cout << "Copying new memory to page num: " << req_obj->page_num() << endl;
+            const char* p_data = req_obj->page_data().c_str();
+            void * base_addr = get_page_base_addr(req_obj->page_num());
+            memcpy(base_addr, p_data, PAGE_SIZE);
+        }
     }
     else{
-        cout << "Granting read access" << endl;
+        cout << "Granting read access to page num: " << req_obj->page_num() <<  endl;
         mprotect(page_addr, PAGE_SIZE, PROT_READ);
     }
 
@@ -327,7 +329,7 @@ Status Node::revoke_write_access(ServerContext* context,
     reply->set_page_num(req_obj->page_num());
     reply->set_page_data(page_data); //TODO: check type for bytes/type page data
 
-    cout << "Revoked write access" << endl;
+    cout << "Revoked write access to page num: " << req_obj->page_num() <<  endl;
 
     return Status::OK;
 
@@ -368,7 +370,7 @@ void Node::register_datasegment(void * psu_ds_start, size_t psu_ds_size) {
     client.register_segment("default", num_pages);
     
     for(int i = 0; i < num_pages; i++){
-        mprotect(get_page_addr(psu_ds_start, i), PAGE_SIZE, PROT_READ);
+        mprotect(get_page_base_addr(i), PAGE_SIZE, PROT_READ);
     }
 
     cout << "Registered memory segment" << endl;

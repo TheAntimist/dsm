@@ -203,7 +203,7 @@ public:
 		return page_addr;
 	}
 
-	void* get_page_addr(void *addr, int page_num);
+//	void* get_page_addr(void *addr, int page_num);
 
 	void * get_page_addr(void *addr);
 	

@@ -10,10 +10,11 @@ bool NodeClient::invalidate_page(int page_num) {
     return status.ok();
 }
 
-bool NodeClient::grant_request_access(int page_num, bool is_write) {
+bool NodeClient::grant_request_access(int page_num, bool is_write, string page_data) {
     PageRequestAccess req;
     req.set_page_num(page_num);
     req.set_is_write(is_write);
+    req.set_page_data(page_data);
 
     Empty reply;
     ClientContext context;
@@ -81,15 +82,20 @@ Status DirectoryImpl::request_access(ServerContext* context,
             
       segments[name].lock(page_num);
 
-      cout << "Read-Write access request from: " << node_num << endl;
+      cout << "Read-Write access request from: " << node_num << " : with page_num:  " << page_num << endl;
       
       vector<int> table_data = segments[name].get_access(page_num);
 
       cout << "Going through table_data" << endl;
-
+      string page;
       for(int i = 0; i < num_nodes; i++) {
-        if(table_data[i] == 1 and i != node_num){
+        if(i != node_num){
           cout << "[debug] Invalidating node: " << i << endl;
+          if(page.size() == 0){
+              cout << "Fetching page number for RW access: " << page_num << " from: " << i << endl;
+              PageData page_d = nodes[i].fetch_page(page_num);
+              page = page_d.page_data();
+          }
           nodes[i].invalidate_page(page_num);
           table_data[i] = 0;
         }
@@ -100,21 +106,24 @@ Status DirectoryImpl::request_access(ServerContext* context,
 
       cout << "Set the state" << endl;
 
-      nodes[node_num].grant_request_access(page_num, true);
+      nodes[node_num].grant_request_access(page_num, true, page);
 
       cout << "Granted request acccess for node: " << node_num << endl;
+
+      
               
       segments[name].set_access(page_num, table_data);
       segments[name].unlock(page_num);
         
       reply->set_page_num(page_num);
+      reply->set_page_data(page);
    
   } else {//requesting read access
 
             
       segments[name].lock(page_num);
 
-      cout << "[debug] Read access request from: " << node_num  << endl;
+      cout << "[debug] Read access request from: " << node_num << " : with page_num:  " << page_num  << endl;
 
       vector<int> table_data = segments[name].get_access(page_num);
 
@@ -124,7 +133,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
             cout << "Page found to be in READ_STATE" << endl;
             for(int i = 0; i < num_nodes; i++){
                 if(table_data[i] == 1){
-                
+                    cout << "Node: " << node_num << "is requesting page " << page_num << " from " << i << endl; 
                     PageData page_d = nodes[i].fetch_page(page_num);
                     page = page_d.page_data();
                     break;
@@ -136,6 +145,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
             cout << "Page found to be in READ_WRITE_STATE" << endl;
             for(int i = 0; i < num_nodes; i++){
                 if(table_data[i] == 1){
+                    cout << "Node: " << node_num << "is requesting page" << page_num << " from " << i << endl;
                     cout << "Asking to revoke access from node: " << i << endl;
                     PageData page_d = nodes[i].revoke_write_access(page_num);
                     cout << "Received page data from node: " << i << endl;

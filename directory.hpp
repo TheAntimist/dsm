@@ -131,7 +131,7 @@ public:
     Status status = stub_->hello(&context, req, &reply);
   }
   bool invalidate_page(int page_num);
-  bool grant_request_access(int page_num, bool is_write);
+  bool grant_request_access(int page_num, bool is_write, string page_data);
   PageData fetch_page(int page_num);
   PageData revoke_write_access(int page_num);
 };
