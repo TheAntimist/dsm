@@ -79,6 +79,8 @@ int main(int argc, char *argv[]) {
 
   psu_mr_setup(total_nums);
   psu_mr_map(map_function, NULL, NULL);
+
+  psu_mr_setup(total_nums);
   psu_mr_reduce(reduce_function, NULL, NULL);
 
   psu_mutex_lock(1);
@@ -87,7 +89,7 @@ int main(int argc, char *argv[]) {
   psu_mutex_unlock(1);
 
   if (node_num == 0) {
-    while(kv[2].value != 0);
+    while(kv[2].value > 0);
 
     int size = kv[0].value;
     cout << "[info] Writing " << size <<" words to file\n" ;

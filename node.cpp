@@ -69,15 +69,15 @@ void Node::init_locks(vector<NodeClient> _nodes) {
 }
 
 void Node::lock_enter_cs(int lockno) {
-    cout << "[debug] Sending Request to directory\n";
+    cout << "[debug] Sending Enter Request to directory\n";
 	client.request_lock(lockno);
 	cout << "[debug] Entering CS.\n";
 }
 
 void Node::lock_exit_cs(int lockno) {
-    cout << "[debug] Sending Request to directory\n";
+    cout << "[debug] Sending Exit Request to directory\n";
 	client.request_unlock(lockno);
-	cout << "[debug] Entering CS.\n";
+	cout << "[debug] Exiting CS.\n";
 }
 
 Status Node::request_lock(ServerContext* context,
