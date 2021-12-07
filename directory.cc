@@ -133,7 +133,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
       for(int i = 0; i < num_nodes; i++) {
         if(i != node_num){
           cout << "[debug] Invalidating node: " << i << endl;
-          if(page.size() == 0){
+          if(page.size() == 0 && table_data[i] == 1){
               cout << "Fetching page number for RW access: " << page_num << " from: " << i << endl;
               PageData page_d = nodes[i].fetch_page(page_num);
               page = page_d.page_data();
