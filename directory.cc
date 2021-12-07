@@ -69,7 +69,9 @@ Status DirectoryImpl::mr_setup(ServerContext* context,
         const MRRequest* reqObj,
         Empty* reply) {
     lock_guard<mutex> lk(barrier_mut);
-    barrier_total = reqObj->total();
+    if (barrier_total == 0) {
+      barrier_total = reqObj->total();
+    }
     return Status::OK;
 }
 

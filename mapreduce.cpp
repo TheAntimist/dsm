@@ -17,7 +17,7 @@ using namespace std;
 
 
 struct keyvalue{
-	char word[8];
+	char word[32];
 	int value;
 };
 typedef struct keyvalue keyvalue;
@@ -116,6 +116,7 @@ void * map_function(void * k) {
   }
 
   while(i++ < (end_line - 1) && getline(file, line)) {
+    cout << i << " " << line << endl;
  
     boost::sregex_iterator it(line.begin(), line.end(), word_regex);
     boost::sregex_iterator end;
@@ -138,7 +139,7 @@ void * reduce_function(void *inp) {
       for (int i = 0; i < size; i++) {
         if (strcmp(kv[i+3].word, word) == 0) {
           present = true;
-          kv[i+3].value += 1;
+          kv[i+3].value += value;
           val = kv[i+3].value;
           break;
         }
@@ -147,10 +148,10 @@ void * reduce_function(void *inp) {
       if (!present) {
         kv[0].value++;
         strcpy(kv[size+1].word, word);
-        kv[size+1].value = 1;
+        kv[size+1].value = value;
         val = kv[size+1].value;
       }
-      cout << "[debug] word=" << word << " | value=" << val << endl;
+      cout << "[debug] word=" << word << " | kv-value=" << val << " | current-value=" << value << endl;
   }
   psu_mutex_unlock(0);
 }
