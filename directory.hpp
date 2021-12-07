@@ -33,6 +33,8 @@ using directory::Empty;
 using directory::RegisterRequest;
 using directory::AccessRequest;
 using directory::AccessReply;
+using directory::LkRequest;
+using directory::MRRequest;
 
 #define INVALID_STATE 0
 #define READ_STATE 1
@@ -145,6 +147,9 @@ class DirectoryImpl final : public DirectoryService::Service {
   unordered_map<string, DataSegment> segments;
   condition_variable cv;
 
+  unordered_map<int, mutex> mutex_map;
+  mutex barrier_mut;
+  int barrier_total = 0;
 
 public:
   DirectoryImpl();
@@ -162,6 +167,23 @@ public:
 			   const Empty* reqObj,
 			   Empty* reply) override;
 
+  Status init_lock(ServerContext* context,
+			   const LkRequest* reqObj,
+			   Empty* reply) override;
+
+  Status request_lock(ServerContext* context,
+			   const LkRequest* reqObj,
+			   Empty* reply) override;
+
+  Status request_unlock(ServerContext* context,
+			   const LkRequest* reqObj,
+			   Empty* reply) override;
+
+  Status mr_setup(ServerContext* context,
+			   const MRRequest* reqObj,
+			   Empty* reply) override;
+  Status mr_barrier(ServerContext* context,
+			   const Empty* reqObj,
+			   Empty* reply) override;
 
 };
-

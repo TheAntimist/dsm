@@ -69,46 +69,15 @@ void Node::init_locks(vector<NodeClient> _nodes) {
 }
 
 void Node::lock_enter_cs(int lockno) {
-    cout << "[debug] Sending Request to all nodes\n";
-	// Send a request to all conns.
-	auto lock = lockMap[lockno];
-	lock->enterCS();
-
-	// Build request for GRPC
-	LockRequest request;
-	request.set_lockno(lockno);
-	request.set_seqno(lock->maxSeqNo);
-	request.set_nodeid(self);
-
-	vector<thread> threads;
-	for(auto client : nodes) {
-		threads.emplace_back(thread(waitForRequest, client, request));
-	}
-
-	//wait for the replies
-	for (auto& th : threads)
-		th.join();
-
-	cout << "[debug] Reply received from all. Entering CS.\n";
+    cout << "[debug] Sending Request to directory\n";
+	client.request_lock(lockno);
+	cout << "[debug] Entering CS.\n";
 }
 
 void Node::lock_exit_cs(int lockno) {
-    auto lock = lockMap[lockno];
-    // Update Lock and Notify all waiting requests
-	lock->exitCS();
-
-	cout << "[debug] Exited CS and sending Replies.\n";
-	// Build request for GRPC
-	LockRequest request;
-	request.set_lockno(lockno);
-	request.set_seqno(lock->maxSeqNo);
-	request.set_nodeid(self);
-
-	// Threads to handle replies.
-	for(auto client : nodes) {
-		thread t(waitForReply, client, request);
-		t.join();
-	}
+    cout << "[debug] Sending Request to directory\n";
+	client.request_unlock(lockno);
+	cout << "[debug] Entering CS.\n";
 }
 
 Status Node::request_lock(ServerContext* context,
@@ -206,6 +175,13 @@ void Node::init() {
 
 int Node::get_page_num(void * addr) {
     int page_num = ((int) ((((char*) addr) - ((char*) start_addr)) / PAGE_SIZE));
+
+    if(page_num < 0){
+        cout << "Error!" << endl;
+        printf("Given addr: %x", addr);
+        printf("Start addr: %x", start_addr);
+    }
+
     return page_num;
 }
 

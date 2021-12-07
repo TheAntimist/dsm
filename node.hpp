@@ -48,6 +48,8 @@ using directory::AccessRequest;
 using directory::NodeService;
 using directory::LockReply;
 using directory::LockRequest;
+using directory::MRRequest;
+using directory::LkRequest;
 
 string localHostname();
 
@@ -154,6 +156,44 @@ public:
 	return status.ok();
   }
 
+  void init_lock(int lockno) {
+	LkRequest request;
+	request.set_lockno(lockno);
+    Empty empty;
+	ClientContext context;
+	Status status = stub_->init_lock(&context, request, &empty);
+}
+
+    void request_lock(int lockno) {
+	LkRequest request;
+	request.set_lockno(lockno);
+    Empty empty;
+	ClientContext context;
+	Status status = stub_->request_lock(&context, request, &empty);
+	}
+
+  void request_unlock(int lockno) {
+	LkRequest request;
+	request.set_lockno(lockno);
+    Empty empty;
+	ClientContext context;
+	Status status = stub_->request_unlock(&context, request, &empty);
+}
+
+  void mr_setup(int total) {
+	MRRequest request;
+	request.set_total(total);
+    Empty empty;
+	ClientContext context;
+Status status = stub_->mr_setup(&context, request, &empty);
+}
+
+  void mr_barrier() {
+	Empty empty, request;
+	ClientContext context;
+	Status status = stub_->mr_barrier(&context, request, &empty);
+  }
+
 };
 
 void waitForRequest(NodeClient client, LockRequest reqObj);
@@ -221,8 +261,7 @@ public:
 	void create_new_lock(int lockno) {
 		// lockno is not present
 		// May not be required
-		shared_ptr<Lock> s(new Lock());
-		lockMap[lockno] = s;
+		client.init_lock(lockno);
 	}
 	void lock_enter_cs(int lockno);
 	void lock_exit_cs(int lockno);
@@ -232,6 +271,14 @@ public:
 	Status reply_lock(ServerContext* context,
   				 const LockRequest* reqObj,
                  Empty* reply) override;
+	
+	void mr_setup(int total) {
+		client.mr_setup(total);
+	}
+
+	void mr_barrier() {
+		client.mr_barrier();
+	}
 
 	static Node instance;
 	static void wrap_signal_handler(int sig, siginfo_t *info, void *ctx) {

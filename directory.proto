@@ -6,9 +6,24 @@ service DirectoryService {
   rpc hello(Empty) returns(Empty) {}
   rpc register_segment(RegisterRequest) returns(Empty) {}
   rpc request_access(AccessRequest) returns(AccessReply) {}
+
+  rpc init_lock(LkRequest) returns(Empty) {}
+  rpc request_lock(LkRequest) returns(Empty) {}
+  rpc request_unlock(LkRequest) returns(Empty) {}
+
+  rpc mr_setup(MRRequest) returns(Empty) {}
+  rpc mr_barrier(Empty) returns(Empty) {}
+}
+
+message LkRequest {
+  int32 lockno = 1;
 }
 
 message Empty {}
+
+message MRRequest {
+  int32 total = 1;
+}
 
 message AccessRequest {
   bool is_write = 1;

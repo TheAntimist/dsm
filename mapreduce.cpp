@@ -65,28 +65,26 @@ int main(int argc, char *argv[]) {
   kv[0].value = 1;
 
   psu_init_lock(0);
+  psu_init_lock(1);
 
   if (node_num == 0) {
     setup();
-    kv[2].value = kv[1].value = kv[0].value = 0;
+    kv[1].value = kv[0].value = 0;
+    kv[2].value = total_nums;
   } else {
     while (kv[0].value != 0);
   }
   
   cout << "[info] Node=" << node_num << " | Total Nodes=" << total_nums << " | Filename=" << filename << endl;
-  
-  psu_mutex_lock(0);
-  kv[2].value++;
-  psu_mutex_unlock(0);
 
   psu_mr_setup(total_nums);
-  psu_mr_map(map_function, NULL, NULL, &(kv[1].value));
-  psu_mr_reduce(reduce_function, NULL, NULL, &(kv[1].value));
+  psu_mr_map(map_function, NULL, NULL);
+  psu_mr_reduce(reduce_function, NULL, NULL);
 
-  psu_mutex_lock(0);
+  psu_mutex_lock(1);
   kv[2].value--;
   cout << "[debug] Total Nodes remaining=" << kv[2].value << endl;
-  psu_mutex_unlock(0);
+  psu_mutex_unlock(1);
 
   if (node_num == 0) {
     while(kv[2].value != 0);

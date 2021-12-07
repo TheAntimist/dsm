@@ -42,6 +42,48 @@ PageData NodeClient::revoke_write_access(int page_num) {
     return reply;
 }
 
+Status DirectoryImpl::init_lock(ServerContext* context,
+			   const LkRequest* reqObj,
+			   Empty* reply) {
+    // This will construct in place.
+    mutex_map[reqObj->lockno()];
+    return Status::OK;
+}
+
+
+Status DirectoryImpl::request_lock(ServerContext* context,
+        const LkRequest* reqObj,
+        Empty* reply) {
+    mutex_map[reqObj->lockno()].lock();
+    return Status::OK;
+}
+
+Status DirectoryImpl::request_unlock(ServerContext* context,
+        const LkRequest* reqObj,
+        Empty* reply) {
+    mutex_map[reqObj->lockno()].unlock();
+    return Status::OK;
+}
+
+Status DirectoryImpl::mr_setup(ServerContext* context,
+        const MRRequest* reqObj,
+        Empty* reply) {
+    lock_guard<mutex> lk(barrier_mut);
+    barrier_total = reqObj->total();
+    return Status::OK;
+}
+
+Status DirectoryImpl::mr_barrier(ServerContext* context,
+        const Empty* reqObj,
+        Empty* reply) {
+    barrier_mut.lock();
+    barrier_total--;
+    barrier_mut.unlock();
+
+    while(barrier_total > 0);
+    return Status::OK;
+}
+
 Status DirectoryImpl::register_segment(ServerContext* context,
 						const RegisterRequest* req_obj,
 						Empty* reply) {
