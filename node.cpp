@@ -104,10 +104,10 @@ void Node::lock_exit_cs(int lockno) {
 	request.set_seqno(lock->maxSeqNo);
 	request.set_nodeid(self);
 
-	// Threads to handle replies. No need to wait.
+	// Threads to handle replies.
 	for(auto client : nodes) {
 		thread t(waitForReply, client, request);
-		t.detach();
+		t.join();
 	}
 }
 

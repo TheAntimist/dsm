@@ -28,6 +28,14 @@ node: directory.pb.o directory.grpc.pb.o node.o
 merge: directory.pb.o directory.grpc.pb.o node.o psu_lock.o app1.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+mr: mapreduce
+
+mapreduce: directory.pb.o directory.grpc.pb.o node.o psu_lock.o psu_mr.o mapreduce.o
+	$(CXX) -lboost_regex $^ $(LDFLAGS) -o $@
+
+locks: directory.pb.o directory.grpc.pb.o node.o psu_lock.o ricart_sim.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 dir: directory
 
 directory: directory.pb.o directory.grpc.pb.o directory.o
