@@ -27,7 +27,7 @@ int c __attribute__ ((aligned (4096)));
 unordered_map<string, int> localKv;
 int total_nums, node_num;
 string filename;
-boost::regex word_regex("\\w+");
+boost::regex word_regex("[^\\s]+");
 
 void *map_function(void *);
 void * reduce_function(void *inp);
