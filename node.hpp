@@ -50,6 +50,7 @@ using directory::LockReply;
 using directory::LockRequest;
 using directory::MRRequest;
 using directory::LkRequest;
+using directory::MallocReply;
 
 string localHostname();
 
@@ -156,6 +157,18 @@ public:
 	return status.ok();
   }
 
+  bool register_malloc(string name, int node_num, int num_pages) {
+	RegisterRequest request;
+	request.set_name(name);
+	request.set_num_pages(num_pages);
+	request.set_node_num(node_num);
+	MallocReply reply;
+	ClientContext context;
+	Status status = stub_->register_malloc(&context, request, &reply);
+	
+	return reply.is_first();
+  }
+
   void init_lock(int lockno) {
 	LkRequest request;
 	request.set_lockno(lockno);
@@ -196,6 +209,29 @@ Status status = stub_->mr_setup(&context, request, &empty);
 
 };
 
+// Represents memory for [start, end)
+class HeapMemory {
+public:
+	void* start_addr;
+	void* end_addr;
+	int num_pages;
+
+	HeapMemory() {}
+	HeapMemory(void * _start_addr,
+				void * _end_addr,
+				int _num_pages) {
+		start_addr = _start_addr;
+		end_addr = _end_addr;
+		num_pages = _num_pages;
+	}
+	HeapMemory& operator=(HeapMemory other) {
+		start_addr = other.start_addr;
+		end_addr = other.end_addr;
+		num_pages = other.num_pages;
+		return *this;
+	}
+};
+
 void waitForRequest(NodeClient client, LockRequest reqObj);
 
 void waitForReply(NodeClient client, LockRequest reqObj);
@@ -206,10 +242,15 @@ class Node final : public NodeService::Service {
 	bool is_default = false;
 	struct sigaction sig;
 	int num_pages = 0;
+	// Data Segment
 	void* start_addr;
+	void* end_addr;
 
 	int self = -1;
 	thread server_thread;
+
+	// Malloc
+	unordered_map<string, HeapMemory> malloc_map;
 
 	// Lock related
 	unordered_map<int, shared_ptr<Lock>> lockMap;
@@ -223,7 +264,6 @@ public:
 	bool is_inited() { return is_init; }
 	void init();
 	void startServer();
-	int get_page_num(void * addr);
 
 	Status invalidate_page(ServerContext* context,
                            const PageRequest* req_obj,
@@ -238,20 +278,31 @@ public:
                     const PageRequest* req_obj, 
                     PageData* reply) override;
 
-	void* get_page_base_addr(int page_num) {
-		void* page_addr = (void *) (((char *) start_addr) + PAGE_SIZE*page_num);
-		return page_addr;
+	void* get_page_base_addr(int page_num, void * st) {
+		return (void *) (((char *) st) + PAGE_SIZE*page_num);
 	}
+
+	void* get_page_base_addr(int page_num, string name) {
+		void * st = start_addr;
+		if (name != "default") {
+			st = malloc_map[name].start_addr;
+		}
+		return get_page_base_addr(page_num, st);
+	}
+	int get_page_num(void * addr, string segment);
+
+	string get_addr_segment(void *addr);
 
 //	void* get_page_addr(void *addr, int page_num);
 
-	void * get_page_addr(void *addr);
+	void * get_page_addr(void *addr, string name);
 	
 	void request_access(void* addr, bool is_write);
 
 	void sighandler(int sig, siginfo_t *info, void *ctx);
 
 	void register_datasegment(void * psu_ds_start, size_t psu_ds_size);
+	void *register_malloc(char * name, size_t size);
 
 	// Ricart Agarwala
 	void init_locks(vector<NodeClient> _nodes);

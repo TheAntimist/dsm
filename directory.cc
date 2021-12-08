@@ -1,8 +1,9 @@
 #include "directory.hpp"
 
-bool NodeClient::invalidate_page(int page_num) {
+bool NodeClient::invalidate_page(int page_num, string name) {
     PageRequest req;
     req.set_page_num(page_num);
+    req.set_name(name);
 
     Empty reply;
     ClientContext context;
@@ -10,11 +11,12 @@ bool NodeClient::invalidate_page(int page_num) {
     return status.ok();
 }
 
-bool NodeClient::grant_request_access(int page_num, bool is_write, string page_data) {
+bool NodeClient::grant_request_access(int page_num, bool is_write, string page_data, string name) {
     PageRequestAccess req;
     req.set_page_num(page_num);
     req.set_is_write(is_write);
     req.set_page_data(page_data);
+    req.set_name(name);
 
     Empty reply;
     ClientContext context;
@@ -22,9 +24,10 @@ bool NodeClient::grant_request_access(int page_num, bool is_write, string page_d
     return status.ok();
 }
 
-PageData NodeClient::fetch_page(int page_num) {
+PageData NodeClient::fetch_page(int page_num, string name) {
     PageRequest req;
     req.set_page_num(page_num);
+    req.set_name(name);
 
     PageData reply;
     ClientContext context;
@@ -32,9 +35,10 @@ PageData NodeClient::fetch_page(int page_num) {
     return reply;
 }
 
-PageData NodeClient::revoke_write_access(int page_num) {
+PageData NodeClient::revoke_write_access(int page_num, string name) {
     PageRequest req;
     req.set_page_num(page_num);
+    req.set_name(name);
 
     PageData reply;
     ClientContext context;
@@ -91,7 +95,7 @@ Status DirectoryImpl::register_segment(ServerContext* context,
 						Empty* reply) {
   string name = req_obj->name();
   {
-    lock_guard<mutex> lk(num_mutex);
+    lock_guard<mutex> lk(num_mutex), m_lk(map_mutex);
     pending_nodes--;
     if (!is_initiated && segments.find(name) == segments.end()) {
       DataSegment segment(req_obj->num_pages(), num_nodes, name);
@@ -111,7 +115,36 @@ Status DirectoryImpl::register_segment(ServerContext* context,
   return Status::OK;
 }
 
+Status DirectoryImpl::register_malloc(ServerContext* context,
+						const RegisterRequest* req_obj,
+						MallocReply* reply) {
+  string name = req_obj->name();
+  lock_guard<mutex> m_lk(map_mutex);
+  if (segments.find(name) == segments.end()) {
+    int num_pages = req_obj->num_pages(), node_num = req_obj->node_num();
+    DataSegment segment(num_pages, num_nodes, name);
 
+    for(int i = 0; i < num_pages; i++) {
+      vector<int> page = segment.get_access(i);
+      for(int j = 0; j < num_nodes; j++) {
+        if (j == node_num) {
+          page[j] = 1;
+        } else {
+          page[j] = 0;
+        }
+      }
+      segment.set_access(i, page);
+      nodes[node_num].grant_request_access(i, false, string(), name);
+    }
+    segments.insert(make_pair(name, segment));
+    // Grant Access
+    reply->set_is_first(true);
+  } else {
+    reply->set_is_first(false);
+    // Page remains invalidated
+  }
+  return Status::OK;
+}
 
 Status DirectoryImpl::request_access(ServerContext* context,
 									 const AccessRequest* req_obj,
@@ -137,10 +170,10 @@ Status DirectoryImpl::request_access(ServerContext* context,
           cout << "[debug] Invalidating node: " << i << endl;
           if(page.size() == 0 && table_data[i] == 1){
               cout << "Fetching page number for RW access: " << page_num << " from: " << i << endl;
-              PageData page_d = nodes[i].fetch_page(page_num);
+              PageData page_d = nodes[i].fetch_page(page_num, name);
               page = page_d.page_data();
           }
-          nodes[i].invalidate_page(page_num);
+          nodes[i].invalidate_page(page_num, name);
           table_data[i] = 0;
         }
       }
@@ -150,7 +183,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
 
       cout << "Set the state" << endl;
 
-      nodes[node_num].grant_request_access(page_num, true, page);
+      nodes[node_num].grant_request_access(page_num, true, page, name);
 
       cout << "Granted request acccess for node: " << node_num << endl;
 
@@ -178,7 +211,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
             for(int i = 0; i < num_nodes; i++){
                 if(table_data[i] == 1){
                     cout << "Node: " << node_num << "is requesting page " << page_num << " from " << i << endl; 
-                    PageData page_d = nodes[i].fetch_page(page_num);
+                    PageData page_d = nodes[i].fetch_page(page_num, name);
                     page = page_d.page_data();
                     break;
                 }
@@ -191,7 +224,7 @@ Status DirectoryImpl::request_access(ServerContext* context,
                 if(table_data[i] == 1){
                     cout << "Node: " << node_num << "is requesting page" << page_num << " from " << i << endl;
                     cout << "Asking to revoke access from node: " << i << endl;
-                    PageData page_d = nodes[i].revoke_write_access(page_num);
+                    PageData page_d = nodes[i].revoke_write_access(page_num, name);
                     cout << "Received page data from node: " << i << endl;
                     page = page_d.page_data();
                     break;
@@ -221,7 +254,7 @@ Status DirectoryImpl::hello(ServerContext* context,
 			 const Empty* reqObj,
 			 Empty* reply) {
   cout << "[debug] Got Hello\n";
-  return Status::OK;              	
+  return Status::OK;           	
 }
 
 void DirectoryImpl::startServer() {

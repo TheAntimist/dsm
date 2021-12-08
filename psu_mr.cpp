@@ -10,7 +10,7 @@ void psu_mr_map(void* (*map_fp)(void*), void *inpdata, void *opdata) {
 
     void * result = map_fp(inpdata);
     if (opdata != nullptr) {
-        opdata = result;
+        (*opdata) = result;
     }
     
     Node::instance.mr_barrier();
@@ -21,7 +21,7 @@ void psu_mr_reduce(void* (*reduce_fp)(void*), void *inpdata, void *opdata) {
 
     void * result = reduce_fp(inpdata);
     if (opdata != nullptr) {
-        opdata = result;
+        (*opdata) = result;
     }
     Node::instance.mr_barrier();
     cout << "\n\n[info] Exiting Reduce function.\n\n";
