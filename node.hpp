@@ -310,9 +310,12 @@ public:
 		return lock_init;
 	}
 	void create_new_lock(int lockno) {
-		// lockno is not present
+		// lockno is not presen
 		// May not be required
-		client.init_lock(lockno);
+
+//		client.init_lock(lockno);
+        shared_ptr<Lock> s(new Lock());
+        lockMap[lockno] = s;
 	}
 	void lock_enter_cs(int lockno);
 	void lock_exit_cs(int lockno);

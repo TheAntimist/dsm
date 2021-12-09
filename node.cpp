@@ -70,14 +70,51 @@ void Node::init_locks(vector<NodeClient> _nodes) {
 
 void Node::lock_enter_cs(int lockno) {
     cout << "[debug] Sending Enter Request to directory\n";
-	client.request_lock(lockno);
-	cout << "[debug] Entering CS.\n";
+//	client.request_lock(lockno);
+
+    cout << "[debug] Sending Request to all nodes\n";
+
+    auto lock = lockMap[lockno];
+    lock->enterCS();
+
+    LockRequest request;
+    request.set_lockno(lockno);
+    request.set_seqno(lock->maxSeqNo);
+    request.set_nodeid(self);
+
+    vector<thread> threads;
+    for(auto client : nodes){
+        threads.emplace_back(thread(waitForRequest, client, request));
+    }
+
+    //wait for the replies
+    for (auto& th : threads)
+        th.join();
+
+    cout << "[debug] Reply received from all. Entering CS. \n";
+
+    //cout << "[debug] Entering CS.\n";
 }
 
 void Node::lock_exit_cs(int lockno) {
-    cout << "[debug] Sending Exit Request to directory\n";
-	client.request_unlock(lockno);
-	cout << "[debug] Exiting CS.\n";
+//    cout << "[debug] Sending Exit Request to directory\n";
+//	client.request_unlock(lockno);
+//	cout << "[debug] Exiting CS.\n";
+    auto lock = lockMap[lockno];
+    lock->exitCS();
+
+    cout << "[debug] Exited CS and sending Replies. \n";
+    // Build request for GRPC
+    LockRequest request;
+    request.set_lockno(lockno);
+    request.set_seqno(lock->maxSeqNo);
+    request.set_nodeid(self);
+
+    //Threads to handle replies. No need to wait.
+    for(auto client : nodes){
+        thread t(waitForReply, client, request);
+        t.join();
+    }
 }
 
 Status Node::request_lock(ServerContext* context,
