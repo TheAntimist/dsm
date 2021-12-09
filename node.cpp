@@ -173,24 +173,50 @@ void Node::init() {
     is_init = true;
 }
 
-int Node::get_page_num(void * addr) {
-    int page_num = ((int) ((((char*) addr) - ((char*) start_addr)) / PAGE_SIZE));
+string Node::get_addr_segment(void *addr) {
+    if (start_addr > 0 && start_addr <= addr && addr < end_addr) {
+        return "default";
+    }
+
+    for (auto const& x : malloc_map) {
+        string segment = x.first;
+        HeapMemory mem = x.second;
+        if (mem.start_addr <= addr && addr < mem.end_addr) {
+            return segment;
+        }
+    }
+
+    // Shouldn't ever reach here
+    return "default";
+}
+
+int Node::get_page_num(void * addr, string name) {
+    void * start = start_addr;
+    if (name != "default") {
+        start = malloc_map[name].start_addr;
+    }
+    
+    int page_num = ((int) ((((char*) addr) - ((char*) start)) / PAGE_SIZE));
 
     if(page_num < 0){
         cout << "Error!" << endl;
         printf("Given addr: %x", addr);
-        printf("Start addr: %x", start_addr);
+        printf("Start addr: %x", start);
     }
 
     return page_num;
 }
 
 
-void * Node::get_page_addr(void *addr){
+void * Node::get_page_addr(void *addr, string name) {
+    void *start = start_addr;
+    if (name != "default") {
+        start = malloc_map[name].start_addr;
+    }
 
-    int page_num = ((int) ((((char *) addr) - ((char  *) start_addr)) / PAGE_SIZE));
+    int page_num = ((int) ((((char *) addr) - ((char  *) start)) / PAGE_SIZE));
 
-    return (void *)( ((char*) start_addr) + PAGE_SIZE*page_num);
+    return (void *)( ((char*) start) + PAGE_SIZE*page_num);
 }
 
 void Node::sighandler(int sig, siginfo_t *info, void *ctx){
@@ -199,40 +225,34 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
 
     if((((ucontext_t *)ctx)->uc_mcontext.gregs[REG_ERR]) & 0x2){
         cout << "[debug] write fault\n";
-
-        int page_num;
-    
-        if(is_default){
-            page_num = get_page_num(info->si_addr);
-        }
+        string segment = get_addr_segment(info->si_addr);
+        int page_num = get_page_num(info->si_addr, segment);
 
         cout << "Requesting page number: " << page_num << endl;
 
-        AccessReply reply = client.request_access(true, page_num, "default", self);       
+        AccessReply reply = client.request_access(true, page_num, segment, self);
 
         return;
     } else {
         cout << "[debug] read fault\n";
 
-        int page_num;
-    
-        if(is_default){
-            page_num = get_page_num(info->si_addr);
-        }
+        string segment = get_addr_segment(info->si_addr);
+        int page_num = get_page_num(info->si_addr, segment);
+
         cout << "Requesting page number: " << page_num << endl;
 
-        AccessReply reply = client.request_access(false, page_num, "default", self);
+        AccessReply reply = client.request_access(false, page_num, segment, self);
        
          
-        mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_WRITE);
+        mprotect(get_page_addr(info->si_addr, segment), PAGE_SIZE, PROT_WRITE);
         cout << "Changing page protecting to write only" << endl;   
         const char* p_data = reply.page_data().c_str();
-        cout << "Did the p_data conversion" << endl;
-        void * base_addr = get_page_addr(info->si_addr);
+        //cout << "Did the p_data conversion" << endl;
+        void * base_addr = get_page_addr(info->si_addr, segment);
         printf("Base address of the page is: %x\n", base_addr);
         memcpy(base_addr, p_data, PAGE_SIZE);
         cout << "Memcopying to the p_data" << endl;
-        mprotect(get_page_addr(info->si_addr), PAGE_SIZE, PROT_READ);
+        mprotect(get_page_addr(info->si_addr, segment), PAGE_SIZE, PROT_READ);
         cout << "Changed permission to read only" << endl;
         return;
     }
@@ -242,12 +262,15 @@ void Node::sighandler(int sig, siginfo_t *info, void *ctx){
 Status Node::invalidate_page(ServerContext* context,
                            const PageRequest* req_obj,
                            Empty* reply) {
+    string name = req_obj->name();
+    if (name != "default" && malloc_map.find(name) == malloc_map.end()) {
+        // Return if we do not have the memory name 
+        return Status::OK;
+    }
 
-
-    
     int page_num = req_obj->page_num();
     
-    void * page_addr = get_page_base_addr(req_obj->page_num());
+    void * page_addr = get_page_base_addr(page_num, name);
     mprotect(page_addr, PAGE_SIZE, PROT_NONE);
 
     cout << "Invalidating page num: " << req_obj->page_num() << endl;
@@ -260,19 +283,18 @@ Status Node::grant_request_access(ServerContext* context,
                             const PageRequestAccess* req_obj, 
                             Empty* reply) {
 
-    void * page_addr = get_page_base_addr(req_obj->page_num());
+    void * page_addr = get_page_base_addr(req_obj->page_num(), req_obj->name());
 
-    if(req_obj->is_write()){
+    if(req_obj->is_write()) {
         cout << "Granting write access to page num: " << req_obj->page_num()  << endl;
         mprotect(page_addr, PAGE_SIZE, PROT_READ | PROT_WRITE);
-        if(req_obj->page_data().size() != 0){
+        if(req_obj->page_data().size() != 0) {
             cout << "Copying new memory to page num: " << req_obj->page_num() << endl;
             const char* p_data = req_obj->page_data().c_str();
-            void * base_addr = get_page_base_addr(req_obj->page_num());
+            void * base_addr = get_page_base_addr(req_obj->page_num(), req_obj->name());
             memcpy(base_addr, p_data, PAGE_SIZE);
         }
-    }
-    else{
+    } else {
         cout << "Granting read access to page num: " << req_obj->page_num() <<  endl;
         mprotect(page_addr, PAGE_SIZE, PROT_READ);
     }
@@ -290,7 +312,7 @@ Status Node::revoke_write_access(ServerContext* context,
 
     cout << "Received to revoke write_access to page_num: " << req_obj->page_num() << endl;
 
-    void * page_addr = get_page_base_addr(req_obj->page_num());
+    void * page_addr = get_page_base_addr(req_obj->page_num(), req_obj->name());
     
     cout << "Changing permissions to given page" << endl;
 
@@ -299,6 +321,8 @@ Status Node::revoke_write_access(ServerContext* context,
     char* page = new char[PAGE_SIZE];
     memcpy(page, page_addr, PAGE_SIZE);
     string page_data(page, PAGE_SIZE);
+    // Free up allocated space on heap
+    delete[] page;
 
     cout << "Copying page data to reply object" << endl;
 
@@ -318,16 +342,17 @@ Status Node::fetch_page(ServerContext* context,
 
     cout << "Received to fetch page to page_num: " << req_obj->page_num() << endl;
 
-    void * page_addr = get_page_base_addr(req_obj->page_num());
+    void * page_addr = get_page_base_addr(req_obj->page_num(), req_obj->name());
     
     cout << "Copying page data" << endl;
 
     char* page = new char[PAGE_SIZE];
     memcpy(page, page_addr, PAGE_SIZE);
     string page_data(page, PAGE_SIZE);
+    delete[] page;
 
     reply->set_page_num(req_obj->page_num());
-    reply->set_page_data(page_data); //TODO: type check page data
+    reply->set_page_data(page_data);
 
     return Status::OK;
 
@@ -340,33 +365,57 @@ void Node::register_datasegment(void * psu_ds_start, size_t psu_ds_size) {
     
     num_pages = (int) (psu_ds_size / PAGE_SIZE);
     start_addr = psu_ds_start;
+    end_addr = (void *)((char*)psu_ds_start + (int)psu_ds_size);
 
     //rpc call to directory node to register segment
 
     client.register_segment("default", num_pages);
     
-    for(int i = 0; i < num_pages; i++){
-        mprotect(get_page_base_addr(i), PAGE_SIZE, PROT_READ);
+    for(int i = 0; i < num_pages; i++) {
+        mprotect(get_page_base_addr(i, "default"), PAGE_SIZE, PROT_READ);
     }
 
     cout << "Registered memory segment" << endl;
 
 }
 
+void *Node::register_malloc(char * name, size_t size) {
+    // TODO: Do we need to lock here?
+    string name_s(name);
+    if (malloc_map.find(name_s) == malloc_map.end()) {
+        void * start;
+        // https://man7.org/linux/man-pages/man3/posix_memalign.3.html
+        posix_memalign(&start, PAGE_SIZE, size);
+        void * end = (void *)((char*)start + size);
+        int pages = (int) (size / PAGE_SIZE);
+        HeapMemory mem(start, end, pages);
+
+        for(int i = 0; i < pages; i++) {
+            mprotect(get_page_base_addr(i, start), PAGE_SIZE, PROT_NONE);
+        }
+
+        // FIXME: Because of race conditions with Grant Request this is here.
+        malloc_map.insert(make_pair(name_s, mem));
+        // Register on the Directory
+        client.register_malloc(name_s, self, pages);
+        cout << "[info] Registered Malloc on the server.\n";
+        return start;
+    }
+}
+
 
 void* psu_dsm_malloc(char *name, size_t size){
+    if (!Node::instance.is_inited()) {
+        Node::instance.init();
+    }
 
-
-//Check if the given name is allocated (shared or remote), if not, create
-
-//if name is not allocated, 
-
+    return Node::instance.register_malloc(name, size);
 }
 
 
 void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size) {
 
-    cout << "Registering the datasegment!!" << endl;
+    cout << "[info] Registering the datasegment!!" << endl;
 
 	//TODO: Make instance and call from here.
     if (!Node::instance.is_inited()) {

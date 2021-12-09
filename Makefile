@@ -9,8 +9,8 @@ CXXFLAGS += -std=c++11 -g
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
-export LD_LIBRARY_PATH=LD_LIBRARY_PATH:/usr/local/lib
-export PKG_CONFIG_PATH=PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
 
 all: build
 
@@ -31,6 +31,9 @@ merge: directory.pb.o directory.grpc.pb.o node.o psu_lock.o app1.o
 mr: mapreduce
 
 mapreduce: directory.pb.o directory.grpc.pb.o node.o psu_lock.o psu_mr.o mapreduce.o
+	$(CXX) -lboost_regex $^ $(LDFLAGS) -o $@
+
+test: test.o
 	$(CXX) -lboost_regex $^ $(LDFLAGS) -o $@
 
 locks: directory.pb.o directory.grpc.pb.o node.o psu_lock.o ricart_sim.o

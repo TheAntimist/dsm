@@ -35,6 +35,7 @@ using directory::AccessRequest;
 using directory::AccessReply;
 using directory::LkRequest;
 using directory::MRRequest;
+using directory::MallocReply;
 
 #define INVALID_STATE 0
 #define READ_STATE 1
@@ -70,7 +71,7 @@ public:
     for(int i = 0; i < num_pages; i++) {
       DataRow row;
       vector<int> v1;
-      for(int j = 0; j < num_nodes; j++){
+      for(int j = 0; j < num_nodes; j++) {
         v1.push_back(READ_STATE);
       }
       shared_ptr<mutex> ptr(new mutex());
@@ -132,10 +133,10 @@ public:
     cout << "[debug] Sending Hello\n";
     Status status = stub_->hello(&context, req, &reply);
   }
-  bool invalidate_page(int page_num);
-  bool grant_request_access(int page_num, bool is_write, string page_data);
-  PageData fetch_page(int page_num);
-  PageData revoke_write_access(int page_num);
+  bool invalidate_page(int page_num, string name);
+  bool grant_request_access(int page_num, bool is_write, string page_data, string name);
+  PageData fetch_page(int page_num, string name);
+  PageData revoke_write_access(int page_num, string name);
 };
 
 class DirectoryImpl final : public DirectoryService::Service {
@@ -143,7 +144,8 @@ class DirectoryImpl final : public DirectoryService::Service {
   bool is_initiated = false;
   int self;
   int num_nodes, pending_nodes;
-  mutex num_mutex;
+  // Num Mutex for the pending_nodes. map_mutex for the map
+  mutex num_mutex, map_mutex;
   unordered_map<string, DataSegment> segments;
   condition_variable cv;
 
@@ -158,6 +160,9 @@ public:
 						  const RegisterRequest* req_obj,
 						  Empty* reply) override;
 
+  Status register_malloc(ServerContext* context,
+						  const RegisterRequest* req_obj,
+						  MallocReply* reply) override;
 
   Status request_access(ServerContext* context,
                         const AccessRequest* req_obj,
