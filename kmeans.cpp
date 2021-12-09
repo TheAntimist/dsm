@@ -5,6 +5,7 @@
 #define NUM_CENTROIDS 4
 
 pair<float, float> kmeans[NUM_CENTROIDS][MAX_SIZE];
+int c __attribute__ ((aligned 4096));
 
 pair<float, float> centroids[NUM_CENTROIDS];
 
@@ -39,7 +40,7 @@ void kmeans_init(){
     int node_point_read = (int) (num_points / total_nodes);
     
 
-    if(node_id + 1 = total_nodes){
+    if((node_id + 1) == total_nodes){
         node_point_read = node_point_read + (num_points - total_nodes*node_point_read);           
     }
 
@@ -66,15 +67,16 @@ void kmeans_init(){
     while(points_read != num_points){
         points_read++
     }
-    
-    num_read = 0;
-    while(num_read < 4 && (infile >> a >> b)){
-        centroids.push_back(make_pair(a,b));
+
+    int idx = 0;
+    while(idx < 4 && (infile >> a >> b)){
+        centroids[idx] = make_pair(a,b));
+        idx++;
     }
     
 
     //TODO: register data segment call
-    
+    psu_dsm_register_datasegment(&)
     
 
     for(auto point : points){
@@ -161,7 +163,7 @@ void reduce_kmeans(void *inpdata, void *opdata){
     
 
     for(int i = 0; i < 4; i++){
-        if(node_id = i){
+        if(node_id == i){
             kmeans_reducer(i);
         }
     }

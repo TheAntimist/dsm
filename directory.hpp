@@ -15,6 +15,7 @@
 #include <grpcpp/health_check_service_interface.h>
 
 #include "directory.grpc.pb.h"
+#include "logger.h"
 
 using namespace std;
 
@@ -111,18 +112,30 @@ public:
 class NodeClient {
   unique_ptr<NodeService::Stub> stub_;
   shared_ptr<Channel> channel;
+  shared_ptr<Logger> logger;
+  string local_host, receiver_host;
 public:
-  NodeClient(shared_ptr<Channel> _channel) 
+  NodeClient(shared_ptr<Channel> _channel, string _local_host, string _receiver_host, shared_ptr<Logger> _logger) 
 	: stub_(NodeService::NewStub(_channel)) {
   	channel = _channel;
+    local_host = _local_host;
+    receiver_host = _receiver_host;
+    logger = _logger;
   }
 
   NodeClient(const NodeClient& other) : stub_(NodeService::NewStub(other.channel)) {
 	  channel = other.channel;
+    local_host = other.local_host;
+	  receiver_host = other.receiver_host;
+	  logger = other.logger;
+
   }
   NodeClient& operator=(NodeClient other) {
 	  swap(channel, other.channel);
 	  stub_ = NodeService::NewStub(other.channel);
+    local_host = other.local_host;
+	  receiver_host = other.receiver_host;
+	  logger = other.logger;
 	  return *this;
   }
 
@@ -131,6 +144,8 @@ public:
     ClientContext context;
     context.set_wait_for_ready(true);
     cout << "[debug] Sending Hello\n";
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "hello"));
     Status status = stub_->hello(&context, req, &reply);
   }
   bool invalidate_page(int page_num, string name);
@@ -152,6 +167,8 @@ class DirectoryImpl final : public DirectoryService::Service {
   unordered_map<int, mutex> mutex_map;
   mutex barrier_mut;
   int barrier_total = 0;
+
+  shared_ptr<Logger> logger;
 
 public:
   DirectoryImpl();

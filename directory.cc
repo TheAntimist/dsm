@@ -7,6 +7,8 @@ bool NodeClient::invalidate_page(int page_num, string name) {
 
     Empty reply;
     ClientContext context;
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "invalidate_page"));
     Status status = stub_->invalidate_page(&context, req, &reply);
     return status.ok();
 }
@@ -20,6 +22,9 @@ bool NodeClient::grant_request_access(int page_num, bool is_write, string page_d
 
     Empty reply;
     ClientContext context;
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "grant_request_access"));
+
     Status status = stub_->grant_request_access(&context, req, &reply);
     return status.ok();
 }
@@ -31,6 +36,9 @@ PageData NodeClient::fetch_page(int page_num, string name) {
 
     PageData reply;
     ClientContext context;
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "fetch_page"));
+
     Status status = stub_->fetch_page(&context, req, &reply);
     return reply;
 }
@@ -42,6 +50,8 @@ PageData NodeClient::revoke_write_access(int page_num, string name) {
 
     PageData reply;
     ClientContext context;
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "revoke_write_access"));
     Status status = stub_->revoke_write_access(&context, req, &reply);
     return reply;
 }
@@ -273,7 +283,7 @@ void DirectoryImpl::startServer() {
   server->Wait();
 }
 
-DirectoryImpl::DirectoryImpl() {
+DirectoryImpl::DirectoryImpl() : logger(new Logger("directory")) {
   cout << "Initializing the directory node" << endl;
 
   ifstream infile("node_list.txt");
@@ -286,7 +296,10 @@ DirectoryImpl::DirectoryImpl() {
   // Remove yourself
   hosts.pop_back();
   for(string host : hosts) {
-    NodeClient client(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()));
+    NodeClient client(grpc::CreateChannel(host, grpc::InsecureChannelCredentials()),
+                      currentHost,
+                      host,
+                      logger);
     // Wait until ready
     client.hello();
     nodes.push_back(client);

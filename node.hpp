@@ -16,6 +16,7 @@
 #include <grpcpp/health_check_service_interface.h>
 
 #include "directory.grpc.pb.h"
+#include "logger.h"
 
 //#define __USE_GNU
 
@@ -78,18 +79,29 @@ public:
 class NodeClient {
   unique_ptr<NodeService::Stub> stub_;
   shared_ptr<Channel> channel;
+  shared_ptr<Logger> logger;
+  string local_host, receiver_host;
 public:
-  NodeClient(shared_ptr<Channel> _channel) 
+  NodeClient(shared_ptr<Channel> _channel, string _local_host, string _receiver_host, shared_ptr<Logger> _logger) 
 	: stub_(NodeService::NewStub(_channel)) {
   	channel = _channel;
+	local_host = _local_host;
+	receiver_host = _receiver_host;
+	logger = _logger;
   }
 
   NodeClient(const NodeClient& other) : stub_(NodeService::NewStub(other.channel)) {
 	  channel = other.channel;
+	  local_host = _local_host;
+	  receiver_host = _receiver_host;
+	  logger = _logger;
   }
   NodeClient& operator=(NodeClient other) {
 	  swap(channel, other.channel);
 	  stub_ = NodeService::NewStub(other.channel);
+	  local_host = other.local_host;
+	  receiver_host = other.receiver_host;
+	  logger = other.logger;
 	  return *this;
   }
 
@@ -98,6 +110,8 @@ public:
     ClientContext context;
     context.set_wait_for_ready(true);
     cout << "[debug] Sending Hello\n";
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+							local_host.c_str(), receiver_host.c_str(), "hello"));
     Status status = stub_->hello(&context, req, &reply);
   }
   LockReply request_lock(LockRequest request);
@@ -107,19 +121,30 @@ public:
 class DirectoryClient {
   unique_ptr<DirectoryService::Stub> stub_;
   shared_ptr<Channel> channel;
+  string local_host, receiver_host;
+  shared_ptr<Logger> logger;
 public:
   DirectoryClient() {}
-  DirectoryClient(shared_ptr<Channel> _channel) 
-	: stub_(DirectoryService::NewStub(_channel)){
+  DirectoryClient(shared_ptr<Channel> _channel, string _local_host, string _receiver_host, shared_ptr<Logger> logger) 
+	: stub_(DirectoryService::NewStub(_channel)) {
 	channel = _channel;
+	logger = _logger;
+	local_host = _local_host;
+	receiver_host = _receiver_host;
   }
 
   DirectoryClient(const DirectoryClient& other) : stub_(DirectoryService::NewStub(other.channel)) {
 	channel = other.channel;
+	local_host = _local_host;
+	receiver_host = _receiver_host;
+	logger = _logger;
   }
   DirectoryClient& operator=(DirectoryClient other) {
 	//cout << "[debug] Channels: " << channel << " "<< other.channel << endl;
 	channel = other.channel;
+	local_host = other.local_host;
+	receiver_host = other.receiver_host;
+	logger = other.logger;  
 	stub_ = DirectoryService::NewStub(other.channel);
 	return *this;
   }
@@ -129,6 +154,8 @@ public:
 	ClientContext context;
 	context.set_wait_for_ready(true);
 	cout << "[debug] Sending Hello\n";
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+							local_host.c_str(), receiver_host.c_str(), hello));
 	Status status = stub_->hello(&context, req, &reply);
   }
 
@@ -142,6 +169,8 @@ public:
     request.set_node_num(node_num);
 	AccessReply reply;
     ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "request_access"));
     Status status = stub_->request_access(&context, request, &reply);
     return reply;
   }
@@ -152,6 +181,8 @@ public:
 	request.set_num_pages(num_pages);
 	Empty empty;
 	ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "register_segment"));
 	Status status = stub_->register_segment(&context, request, &empty);
 	
 	return status.ok();
@@ -164,6 +195,8 @@ public:
 	request.set_node_num(node_num);
 	MallocReply reply;
 	ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "register_malloc"));
 	Status status = stub_->register_malloc(&context, request, &reply);
 	
 	return reply.is_first();
@@ -174,6 +207,8 @@ public:
 	request.set_lockno(lockno);
     Empty empty;
 	ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "init_lock"));
 	Status status = stub_->init_lock(&context, request, &empty);
 }
 
@@ -182,6 +217,8 @@ public:
 	request.set_lockno(lockno);
     Empty empty;
 	ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "request_lock"));
 	Status status = stub_->request_lock(&context, request, &empty);
 	}
 
@@ -190,6 +227,8 @@ public:
 	request.set_lockno(lockno);
     Empty empty;
 	ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "request_unlock"));
 	Status status = stub_->request_unlock(&context, request, &empty);
 }
 
@@ -198,12 +237,16 @@ public:
 	request.set_total(total);
     Empty empty;
 	ClientContext context;
-Status status = stub_->mr_setup(&context, request, &empty);
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "mr_setup"));
+	Status status = stub_->mr_setup(&context, request, &empty);
 }
 
   void mr_barrier() {
 	Empty empty, request;
 	ClientContext context;
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "mr_barrier"));
 	Status status = stub_->mr_barrier(&context, request, &empty);
   }
 
@@ -256,6 +299,7 @@ class Node final : public NodeService::Service {
 	unordered_map<int, shared_ptr<Lock>> lockMap;
 	vector<NodeClient> nodes;
 	bool lock_init = false;
+	shared_ptr<Logger> logger;
 
 public:
 	Node();

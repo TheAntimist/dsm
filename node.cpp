@@ -40,6 +40,8 @@ LockReply NodeClient::request_lock(LockRequest request) {
 	LockReply reply;
 	ClientContext context;
 	Status status = stub_->request_lock(&context, request, &reply);
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "request_lock"));
 
     // Act upon its status.
     if (!status.ok()) {
@@ -52,6 +54,8 @@ LockReply NodeClient::request_lock(LockRequest request) {
 bool NodeClient::reply_lock(LockRequest request) {
 	Empty empty;	
 	ClientContext context;
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+                local_host.c_str(), receiver_host.c_str(), "reply_lock"));
 	Status status = stub_->reply_lock(&context, request, &empty);
     return status.ok();
 }
@@ -151,7 +155,7 @@ Status Node::reply_lock(ServerContext* context,
 
 Node Node::instance;
 
-Node::Node() {
+Node::Node() : logger(new Logger()) {
     memset(&sig, 0, sizeof(sig));
 
     thread t(&Node::startServer, this);
@@ -171,7 +175,10 @@ Node::Node() {
     infile.close();
     cout << "[debug] Directory Host : " << lastHost << endl;
     DirectoryClient _client(grpc::CreateChannel(lastHost,
-                            grpc::InsecureChannelCredentials()));
+                            grpc::InsecureChannelCredentials()),
+                            actualHost, 
+                            lastHost,
+                            logger);
     client = _client;
     // Wait for Directory connection.
     client.hello();
@@ -460,13 +467,3 @@ void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size) {
     }
     Node::instance.register_datasegment(psu_ds_start, psu_ds_size);
 }
-
-
-/* int main() {
-  DirectoryClient client(grpc::CreateChannel("e5-cse-135-07.cse.psu.edu:8080", grpc::InsecureChannelCredentials()));
-  // Wait until ready
-  client.hello();
-  cout << client.register_segment("default", 2) << endl;
-
-  return 0;
-} */
