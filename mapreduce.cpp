@@ -69,8 +69,8 @@ int main(int argc, char *argv[]) {
 
   if (node_num == 0) {
     setup();
-    kv[1].value = kv[0].value = 0;
-    kv[2].value = total_nums;
+    kv[0].value = 0;
+    kv[1].value = total_nums;
   } else {
     while (kv[0].value != 0);
   }
@@ -84,18 +84,16 @@ int main(int argc, char *argv[]) {
   psu_mr_reduce(reduce_function, NULL, NULL);
 
   psu_mutex_lock(1);
-  kv[2].value--;
-  cout << "[debug] Total Nodes remaining=" << kv[2].value << endl;
+  kv[1].value--;
+  cout << "[debug] Total Nodes remaining=" << kv[1].value << endl;
   psu_mutex_unlock(1);
 
   if (node_num == 0) {
-    while(kv[2].value > 0);
-
     int size = kv[0].value;
     cout << "[info] Writing " << size <<" words to file\n" ;
     ofstream file("output.txt");
     for(int i = 0; i < size; i++) {
-      file << kv[i+3].word << " : " << kv[i+3].value << endl;
+      file << kv[i+2].word << " : " << kv[i+2].value << endl;
     }
     file.close();
   }
@@ -137,19 +135,19 @@ void * reduce_function(void *inp) {
       int size = kv[0].value, val = 0;
       bool present = false;
       for (int i = 0; i < size; i++) {
-        if (strcmp(kv[i+3].word, word) == 0) {
+        if (strcmp(kv[i+2].word, word) == 0) {
           present = true;
-          kv[i+3].value += value;
-          val = kv[i+3].value;
+          kv[i+2].value += value;
+          val = kv[i+2].value;
           break;
         }
       }
 
       if (!present) {
         kv[0].value++;
-        strcpy(kv[size+1].word, word);
-        kv[size+1].value = value;
-        val = kv[size+1].value;
+        strcpy(kv[size+2].word, word);
+        kv[size+2].value = value;
+        val = kv[size+2].value;
       }
       cout << "[debug] word=" << word << " | kv-value=" << val << " | current-value=" << value << endl;
   }
