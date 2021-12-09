@@ -174,8 +174,8 @@ void Node::init() {
 }
 
 string Node::get_addr_segment(void *addr) {
-    if (start_addr <= addr && addr < end_addr) {
-        return string("default");
+    if (start_addr > 0 && start_addr <= addr && addr < end_addr) {
+        return "default";
     }
 
     for (auto const& x : malloc_map) {
@@ -186,7 +186,8 @@ string Node::get_addr_segment(void *addr) {
         }
     }
 
-    return string("default");
+    // Shouldn't ever reach here
+    return "default";
 }
 
 int Node::get_page_num(void * addr, string name) {
@@ -382,12 +383,14 @@ void *Node::register_malloc(char * name, size_t size) {
     // TODO: Do we need to lock here?
     string name_s(name);
     if (malloc_map.find(name_s) == malloc_map.end()) {
-        void * start = malloc(size);
+        void * start;
+        // https://man7.org/linux/man-pages/man3/posix_memalign.3.html
+        posix_memalign(&start, PAGE_SIZE, size);
         void * end = (void *)((char*)start + size);
         int pages = (int) (size / PAGE_SIZE);
         HeapMemory mem(start, end, pages);
 
-        for(int i = 0; i < num_pages; i++) {
+        for(int i = 0; i < pages; i++) {
             mprotect(get_page_base_addr(i, start), PAGE_SIZE, PROT_NONE);
         }
 
@@ -395,17 +398,17 @@ void *Node::register_malloc(char * name, size_t size) {
         malloc_map.insert(make_pair(name_s, mem));
         // Register on the Directory
         client.register_malloc(name_s, self, pages);
+        cout << "[info] Registered Malloc on the server.\n";
         return start;
     }
 }
 
 
 void* psu_dsm_malloc(char *name, size_t size){
+    if (!Node::instance.is_inited()) {
+        Node::instance.init();
+    }
 
-
-    //Check if the given name is allocated (shared or remote), if not, create
-
-    //if name is not allocated,
     return Node::instance.register_malloc(name, size);
 }
 

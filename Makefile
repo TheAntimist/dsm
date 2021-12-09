@@ -9,8 +9,8 @@ CXXFLAGS += -std=c++11 -g
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
 
-export LD_LIBRARY_PATH=LD_LIBRARY_PATH:/usr/local/lib
-export PKG_CONFIG_PATH=PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
+export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
 
 all: build
 

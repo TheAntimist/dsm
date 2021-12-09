@@ -337,6 +337,7 @@ public:
 	}
 };
 
+void * psu_dsm_malloc(char *name, size_t size);
 void psu_dsm_register_datasegment(void * psu_ds_start, size_t psu_ds_size);
 
 #endif
