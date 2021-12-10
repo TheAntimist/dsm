@@ -2,7 +2,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include "node.hpp"
+#include "psu_dsm_system.h"
 #include <chrono>
 #include <thread>
 

@@ -22,36 +22,19 @@ p2: directory.pb.o directory.grpc.pb.o psu_dsm_system.o p2.o
 p3: directory.pb.o directory.grpc.pb.o psu_dsm_system.o p3.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-node: directory.pb.o directory.grpc.pb.o 
-psu_dsm_system.o
-	$(CXX) $^ $(LDFLAGS) -o $@
-
 merge: directory.pb.o directory.grpc.pb.o psu_dsm_system.o psu_lock.o app1.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 kmeans: directory.pb.o directory.grpc.pb.o psu_dsm_system.o psu_lock.o kmeans.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
-mr: mapreduce
-
-mapreduce: directory.pb.o directory.grpc.pb.o psu_dsm_system.o psu_lock.o psu_mr.o mapreduce.o
+wordcount: directory.pb.o directory.grpc.pb.o psu_dsm_system.o psu_lock.o psu_mr.o wordcount.o
 	$(CXX) -lboost_regex $^ $(LDFLAGS) -o $@
 
-test: test.o
-	$(CXX) -lboost_regex $^ $(LDFLAGS) -o $@
-
-locks: directory.pb.o directory.grpc.pb.o psu_dsm_system.o psu_lock.o ricart_sim.o
-	$(CXX) $^ $(LDFLAGS) -o $@
 
 dir: directory
 
 directory: directory.pb.o directory.grpc.pb.o directory.o
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-build: rpc.pb.o rpc.grpc.pb.o psu_dsm_system.o rpc_sim.o
-	$(CXX) $^ $(LDFLAGS) -o $@
-
-dsm: directory.pb.o directory.grpc.pb.o d_psu_dsm_system.o dsm.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
 %.grpc.pb.cc: %.proto

@@ -1,0 +1,30 @@
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for hello with arguments: [] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for register_segment with arguments: [default, 64] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [1, 0, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for hello with arguments: [] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for hello with arguments: [] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 0, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 0, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for mr_setup with arguments: [3] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for request_lock with arguments: [0, 1, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for request_lock with arguments: [0, 1, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 16, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [1, 16, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 0, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [1, 0, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 48, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [1, 48, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 32, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [1, 32, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for reply_lock with arguments [0, 1, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for reply_lock with arguments [0, 1, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for mr_barrier with arguments: [] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for mr_setup with arguments: [3] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for request_lock with arguments: [0, 3, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for request_lock with arguments: [0, 3, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [0, 16, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for request_access with arguments: [1, 16, default, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for reply_lock with arguments [0, 3, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for reply_lock with arguments [0, 3, 1] ----
+----RPC call from e5-cse-135-02.cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for mr_barrier with arguments: [] ----
+cse.psu.edu:8080 to e5-cse-135-07.cse.psu.edu:8080 for mr_barrier with arguments: [] ----

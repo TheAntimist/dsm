@@ -13,7 +13,7 @@ int global_array[COUNT] __attribute__ ((aligned (4096)));
 int partition_num[1024] __attribute__ ((aligned (4096)));
 
 int logbase2(int n);
-int partition_num(int id, int level, int num);
+int partition_num_func(int id, int level, int num);
 void partial_sort(int process_num, int total_processes_num);
 void merge(int process_num, int total_processes_num);
 
@@ -30,6 +30,7 @@ void wait_partition(int a)
 
 void initialize()
 {
+	time_t t;
 	srand((unsigned) time(&t));
 	for(int i = 0; i<COUNT; i++)
 	{
@@ -77,7 +78,7 @@ int main(int argc, char* argv[])
 		if(p % (1<<i) == 0)
 		{
 			merge(p/(1<<i),n/(1<<i));
-			int b_id = partition_num(p,i,n);
+			int b_id = partition_num_func(p,i,n);
 			wait_partition(b_id);
 		}
 		++i;
@@ -174,7 +175,7 @@ int logbase2(int n)
 	return i;
 }
 
-int partition_num(int id, int level, int num)
+int partition_num_func(int id, int level, int num)
 {
 	int k = logbase2(num)-level-1;
 	int s_k = 1 << k;

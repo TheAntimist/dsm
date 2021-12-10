@@ -48,10 +48,10 @@ void map_kmeans(void * inpdata, void * outpdata) {
 	infile >> num_centroids;
 
 
-    results[0][0].x = results[0][0].y = 0.0f;
-    results[1][0].x = results[1][0].y = 0.0f;
-    results[2][0].x = results[2][0].y = 0.0f;
-    results[3][0].x = results[3][0].y = 0.0f;
+//    results[0][0].x = results[0][0].y = 0.0f;
+ //   results[1][0].x = results[1][0].y = 0.0f;
+ //   results[2][0].x = results[2][0].y = 0.0f;
+ //   results[3][0].x = results[3][0].y = 0.0f;
 
 	
     vector<point> points;
@@ -133,7 +133,9 @@ float round_2(float arg) {
 
 void kmeans_reducer(int centroid_id) {
 
-  float x = 0, y = 0;
+
+    psu_mutex_lock(0);
+    float x = 0, y = 0;
 
 
     for(int j = 0; j < results[centroid_id][0].x; j++) {
@@ -141,13 +143,14 @@ void kmeans_reducer(int centroid_id) {
         y = y + results[centroid_id][j + 2].y;
     }
     
-    float x_res = round_2(x / results[centroid_id][0].x);
-    float y_res = round_2(y / results[centroid_id][0].x);
+    float x_res = x / results[centroid_id][0].x;
+    float y_res = y / results[centroid_id][0].x;
 
     cout << "Centroid " << centroid_id + 1 << ": " << x_res << " " << y_res << endl;
 
-    results[centroid_id][1].x = x_res;
-    results[centroid_id][1].y = y_res;
+    results[centroid_id][1].x = round_2(x_res);
+    results[centroid_id][1].y = round_2(y_res);
+    psu_mutex_unlock(0);
 }
 
 
@@ -185,21 +188,32 @@ int main(int argc, char *argv[]){
 	cout << &results << " " << NUM_CENTROIDS * MAX_SIZE * sizeof(point);
 
     psu_dsm_register_datasegment(&results, NUM_CENTROIDS * MAX_SIZE * sizeof(point));
- 
-	psu_init_lock(0);
+    results[0][0].x = 1;
 
-	Node::instance.mr_setup(total_nodes);
+	psu_init_lock(0);
+    
+    if(node_id == 0) {
+        for(int i = 3; i >= 0; i--){
+            results[i][0].x = results[i][0].y = 0.0f;
+        } 
+    }
+    else{
+        while(results[0][0].x != 0.0f);
+    }
+    	
+    Node::instance.mr_setup(total_nodes);
     map_kmeans(NULL, NULL);
 
 	cout << "Finished map, going into reduce" << endl;
 
 	Node::instance.mr_setup(total_nodes);
     reduce_kmeans(NULL, NULL);
-
-	ofstream out("output_kmeans.txt");
-	for (int i = 0; i < 4; i++) {
-	  out << results[i][1].x << " " << results[i][1].y << endl;
-	}
-	out.close();
+    if(node_id == 0){
+    	ofstream out("output_kmeans.txt");
+	    for (int i = 0; i < 4; i++) {
+    	  out << results[i][1].x << " " << results[i][1].y << endl;
+    	}
+	    out.close();
+    }
 	return 0;
 }

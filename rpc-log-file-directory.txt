@@ -1,0 +1,90 @@
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for hello with arguments: [] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for hello with arguments: [] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for hello with arguments: [] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [48, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for revoke_write_access with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [32, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [16, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for revoke_write_access with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for revoke_write_access with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for fetch_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for grant_request_access with arguments: [16, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for revoke_write_access with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for revoke_write_access with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for fetch_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for grant_request_access with arguments: [48, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for revoke_write_access with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for fetch_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for grant_request_access with arguments: [32, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for revoke_write_access with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for grant_request_access with arguments: [16, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for revoke_write_access with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for grant_request_access with arguments: [32, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for revoke_write_access with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for revoke_write_access with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for fetch_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [48, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for grant_request_access with arguments: [48, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for revoke_write_access with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for fetch_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [0, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for grant_request_access with arguments: [0, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for revoke_write_access with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-23.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for fetch_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for invalidate_page with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for grant_request_access with arguments: [16, 1, page_data, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-02.cse.psu.edu:8080 for revoke_write_access with arguments: [16, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for revoke_write_access with arguments: [32, default] ----
+----RPC call from e5-cse-135-07.cse.psu.edu:8080 to e5-cse-135-04.cse.psu.edu:8080 for revoke_write_access with arguments: [48, default] ----
