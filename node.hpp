@@ -110,7 +110,7 @@ public:
     ClientContext context;
     context.set_wait_for_ready(true);
     cout << "[debug] Sending Hello\n";
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [] ----",
 							local_host.c_str(), receiver_host.c_str(), "hello"));
     Status status = stub_->hello(&context, req, &reply);
   }
@@ -154,7 +154,7 @@ public:
 	ClientContext context;
 	context.set_wait_for_ready(true);
 	cout << "[debug] Sending Hello\n";
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [] ----",
 							local_host.c_str(), receiver_host.c_str(), "hello"));
 	Status status = stub_->hello(&context, req, &reply);
   }
@@ -169,8 +169,8 @@ public:
     request.set_node_num(node_num);
 	AccessReply reply;
     ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "request_access"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d, %d, %s, %d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "request_access", is_write, page_num, name.c_str(), node_num));
     Status status = stub_->request_access(&context, request, &reply);
     return reply;
   }
@@ -181,8 +181,8 @@ public:
 	request.set_num_pages(num_pages);
 	Empty empty;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "register_segment"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%s, %d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "register_segment", name.c_str(), num_pages));
 	Status status = stub_->register_segment(&context, request, &empty);
 	
 	return status.ok();
@@ -195,8 +195,8 @@ public:
 	request.set_node_num(node_num);
 	MallocReply reply;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "register_malloc"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%s, %d, %d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "register_malloc", name.c_str(), node_num, num_pages));
 	Status status = stub_->register_malloc(&context, request, &reply);
 	
 	return reply.is_first();
@@ -207,8 +207,8 @@ public:
 	request.set_lockno(lockno);
     Empty empty;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "init_lock"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "init_lock", lockno));
 	Status status = stub_->init_lock(&context, request, &empty);
 }
 
@@ -217,8 +217,8 @@ public:
 	request.set_lockno(lockno);
     Empty empty;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "request_lock"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "request_lock", lockno));
 	Status status = stub_->request_lock(&context, request, &empty);
 	}
 
@@ -227,8 +227,8 @@ public:
 	request.set_lockno(lockno);
     Empty empty;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "request_unlock"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "request_unlock", lockno));
 	Status status = stub_->request_unlock(&context, request, &empty);
 }
 
@@ -237,15 +237,15 @@ public:
 	request.set_total(total);
     Empty empty;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "mr_setup"));
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "mr_setup", total));
 	Status status = stub_->mr_setup(&context, request, &empty);
 }
 
   void mr_barrier() {
 	Empty empty, request;
 	ClientContext context;
-	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+	logger->log(string_format("----RPC call from %s to %s for %s with arguments: [] ----",
                 local_host.c_str(), receiver_host.c_str(), "mr_barrier"));
 	Status status = stub_->mr_barrier(&context, request, &empty);
   }

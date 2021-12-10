@@ -7,8 +7,8 @@ bool NodeClient::invalidate_page(int page_num, string name) {
 
     Empty reply;
     ClientContext context;
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "invalidate_page"));
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d, %s] ----",
+							  local_host.c_str(), receiver_host.c_str(), "invalidate_page", page_num, name.c_str()));
     Status status = stub_->invalidate_page(&context, req, &reply);
     return status.ok();
 }
@@ -22,8 +22,8 @@ bool NodeClient::grant_request_access(int page_num, bool is_write, string page_d
 
     Empty reply;
     ClientContext context;
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "grant_request_access"));
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d, %d, page_data, %s] ----",
+							  local_host.c_str(), receiver_host.c_str(), "grant_request_access", page_num, is_write, name.c_str()));
 
     Status status = stub_->grant_request_access(&context, req, &reply);
     return status.ok();
@@ -36,8 +36,8 @@ PageData NodeClient::fetch_page(int page_num, string name) {
 
     PageData reply;
     ClientContext context;
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "fetch_page"));
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d, %s] ----",
+							  local_host.c_str(), receiver_host.c_str(), "fetch_page", page_num, name.c_str()));
 
     Status status = stub_->fetch_page(&context, req, &reply);
     return reply;
@@ -50,8 +50,8 @@ PageData NodeClient::revoke_write_access(int page_num, string name) {
 
     PageData reply;
     ClientContext context;
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "revoke_write_access"));
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d, %s] ----",
+							  local_host.c_str(), receiver_host.c_str(), "revoke_write_access", page_num, name.c_str()));
     Status status = stub_->revoke_write_access(&context, req, &reply);
     return reply;
 }

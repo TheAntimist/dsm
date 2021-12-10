@@ -40,8 +40,8 @@ LockReply NodeClient::request_lock(LockRequest request) {
 	LockReply reply;
 	ClientContext context;
 	Status status = stub_->request_lock(&context, request, &reply);
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "request_lock"));
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments: [%d, %d, %d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "request_lock", request.lockno(), request.seqno(), request.nodeid()));
 
     // Act upon its status.
     if (!status.ok()) {
@@ -54,8 +54,8 @@ LockReply NodeClient::request_lock(LockRequest request) {
 bool NodeClient::reply_lock(LockRequest request) {
 	Empty empty;	
 	ClientContext context;
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-                local_host.c_str(), receiver_host.c_str(), "reply_lock"));
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments [%d, %d, %d] ----",
+							  local_host.c_str(), receiver_host.c_str(), "reply_lock", request.lockno(), request.seqno(), request.nodeid()));
 	Status status = stub_->reply_lock(&context, request, &empty);
     return status.ok();
 }

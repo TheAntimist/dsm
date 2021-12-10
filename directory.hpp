@@ -144,7 +144,7 @@ public:
     ClientContext context;
     context.set_wait_for_ready(true);
     cout << "[debug] Sending Hello\n";
-    logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
+    logger->log(string_format("----RPC call from %s to %s for %s with arguments: [] ----",
                 local_host.c_str(), receiver_host.c_str(), "hello"));
     Status status = stub_->hello(&context, req, &reply);
   }
