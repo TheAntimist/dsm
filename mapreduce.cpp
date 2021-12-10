@@ -6,7 +6,7 @@
 #include <boost/regex.hpp>
 #include <algorithm>
 
-#include "node.hpp"
+#include "psu_dsm_system.h"
 #include "psu_lock.h"
 #include "psu_mr.h"
 

@@ -14,7 +14,7 @@
 
 using namespace std;
 
-#include "node.hpp"
+#include "psu_dsm_system.h"
 #include "psu_lock.h"
 
 

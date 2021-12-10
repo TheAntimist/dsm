@@ -1,4 +1,4 @@
-#include "node.hpp"
+#include "psu_dsm_system.h"
 
 string localHostname() {
   char buffer[100];
