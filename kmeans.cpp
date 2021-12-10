@@ -48,7 +48,7 @@ void map_kmeans(void * inpdata, void * outpdata) {
 	infile >> num_centroids;
 
 
-	results[0][0].x = results[0][0].y = 0.0f;
+    results[0][0].x = results[0][0].y = 0.0f;
     results[1][0].x = results[1][0].y = 0.0f;
     results[2][0].x = results[2][0].y = 0.0f;
     results[3][0].x = results[3][0].y = 0.0f;
@@ -93,55 +93,56 @@ void map_kmeans(void * inpdata, void * outpdata) {
 	psu_mutex_lock(0);
 	for(auto p : points) {
 
-        float x1 = p.x;
-        float y1 = p.y;
-        
-        float min_distance = FLT_MAX;
-        int centroid;
+		float x1 = p.x;
+		float y1 = p.y;
+		
+		float min_distance = FLT_MAX;
+		int centroid;
 
 
-        for(int i = 0; i < 4; i++) {
-    
-            float x2 = centroids[i].x;
-            float y2 = centroids[i].y;
+		for(int i = 0; i < 4; i++) {
+	    
+		    float x2 = centroids[i].x;
+		    float y2 = centroids[i].y;
 
-            float dist = pow(x2 - x1, 2) + pow(y2 - y1, 2);
-            dist = sqrt(dist);
+		    float dist = pow(x2 - x1, 2) + pow(y2 - y1, 2);
+		    dist = sqrt(dist);
 
-            if(dist < min_distance){
-                min_distance = dist;
-                centroid = i;
-            }
+		    if(dist < min_distance){
+		        min_distance = dist;
+		        centroid = i;
+		    }
+		}
+
+
+		int size = (int)(results[centroid][0].x);
+		results[centroid][size+2] = p;
+		results[centroid][0].x = (float)(size + 1);
+		cout << "size=" << size << " x=" <<p.x << " y=" << p.y << endl;
+
         }
 
-        point r;
-		r.x = x1;
-		r.y = y1;
-        int size = (int)(results[centroid][0].x);
-        results[centroid][size+2] = r;
-        results[centroid][0].x = (float)(size + 1);
-
-    }
 	psu_mutex_unlock(0);
 
 	Node::instance.mr_barrier();
 }
 
-
+float round_2(float arg) {
+  return round(arg * 100) / 100;
+}
 
 void kmeans_reducer(int centroid_id) {
 
-    float x;
-    float y;
+  float x = 0, y = 0;
 
 
-    for(int j = 2; j < results[centroid_id][0].x; j++) {
-        x = x + results[centroid_id][j].x;
-        y = y + results[centroid_id][j].y;
+    for(int j = 0; j < results[centroid_id][0].x; j++) {
+        x = x + results[centroid_id][j + 2].x;
+        y = y + results[centroid_id][j + 2].y;
     }
     
-    float x_res = x / results[centroid_id][0].x;
-    float y_res = y / results[centroid_id][0].x;
+    float x_res = round_2(x / results[centroid_id][0].x);
+    float y_res = round_2(y / results[centroid_id][0].x);
 
     cout << "Centroid " << centroid_id + 1 << ": " << x_res << " " << y_res << endl;
 
@@ -184,7 +185,9 @@ int main(int argc, char *argv[]){
 	cout << &results << " " << NUM_CENTROIDS * MAX_SIZE * sizeof(point);
 
     psu_dsm_register_datasegment(&results, NUM_CENTROIDS * MAX_SIZE * sizeof(point));
-    
+ 
+	psu_init_lock(0);
+
 	Node::instance.mr_setup(total_nodes);
     map_kmeans(NULL, NULL);
 
