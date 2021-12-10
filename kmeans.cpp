@@ -1,13 +1,33 @@
-#include "kmeans.hpp"
+#include <string>
+#include <fstream>
+#include <iostream>
+#include <vector>
+#include <unordered_map>
+#include <memory>
+#include <thread>
+#include <utility>
+#include <mutex>
+#include <condition_variable>
+#include <unistd.h>
+#include <math.h>
+#include <float.h>
+
+using namespace std;
+
+#include "node.hpp"
+#include "psu_lock.h"
 
 
-#define MAX_SIZE 10000
+#define MAX_SIZE 8192
 #define NUM_CENTROIDS 4
 
-pair<float, float> kmeans[NUM_CENTROIDS][MAX_SIZE];
-int c __attribute__ ((aligned 4096));
-
-pair<float, float> centroids[NUM_CENTROIDS];
+struct point {
+    float x, y;
+};
+typedef struct point point;
+int g __attribute__ ((aligned (4096)));
+point results[NUM_CENTROIDS][MAX_SIZE] __attribute__ ((aligned (4096)));
+int c __attribute__ ((aligned (4096)));
 
 string filename;
 int num_points;
@@ -15,18 +35,11 @@ int num_centroids;
 int node_id;
 int total_nodes;
 
-void kmeans_init(){
+vector<point> centroids;
 
-
-    kmeans[0][0] = make_pair(0.0f, 0.0f);
-    kmeans[1][0] = make_pair(0.0f, 0.0f);
-    kmeans[2][0] = make_pair(0.0f, 0.0f);
-    kmeans[3][0] = make_pair(0.0f, 0.0f);
-
-	int num_points;
-	int num_centroids; 
-    int points_read;
-    int point_counter = 0;
+void map_kmeans(void * inpdata, void * outpdata) {
+    int num_points;
+	int num_centroids;
     
 	string line;	
 	ifstream infile(filename);
@@ -34,64 +47,63 @@ void kmeans_init(){
 	infile >> num_points;
 	infile >> num_centroids;
 
+
+	results[0][0].x = results[0][0].y = 0.0f;
+    results[1][0].x = results[1][0].y = 0.0f;
+    results[2][0].x = results[2][0].y = 0.0f;
+    results[3][0].x = results[3][0].y = 0.0f;
+
 	
-    vector<pair<float, float>> points; 
+    vector<point> points;
     
-    int node_point_read = (int) (num_points / total_nodes);
-    
+    int segment_size = num_points / total_nodes;
 
-    if((node_id + 1) == total_nodes){
-        node_point_read = node_point_read + (num_points - total_nodes*node_point_read);           
-    }
+    int start = node_id * segment_size,
+        end = node_id == (total_nodes - 1) ? num_points : start + segment_size;
+    cout << "[debug] File[" << filename << "] | start = " << start << " | end = " << end << " | segment_size = " << segment_size << endl;
+    int points_read = -1;
 
-
-    point_counter = node_id*node_point_read + 1;
-    points_read = 0; //starting at first line of n points in file
-   
-	float a;
-	float b;
+    float a, b;
 
     //loop through the file to go to line
-    while(points_read != point_counter && points_read != num_points && (infile >> a >> b)){
+    while((points_read + 1) != start && (infile >> a >> b)) {
         points_read++;
     }
 
-    int num_read = 1;
+    while(points_read++ < (end - 1) && (infile >> a >> b)) {
+        point p;
+        p.x = a;
+        p.y = b;
+        points.push_back(p);
 
-    while(num_read != node_point_read && (infile >> a >> b)){
-        points.push_back(make_pair(a, b));   
-        num_read++;
-        points_read++;
+        cout <<  "Point x=" << a << " y=" << b << endl;        
     }    
 
-    while(points_read != num_points){
-        points_read++
+    while(points_read++ < num_points && (infile >> a >> b)) {}
+
+    while(points_read++ <= (num_points + 4) && (infile >> a >> b)) {
+        point p;
+        p.x = a;
+        p.y = b;
+		centroids.push_back(p);
+        cout <<  "centroid x=" << a << " y=" << b << endl;
     }
+	infile.close();
 
-    int idx = 0;
-    while(idx < 4 && (infile >> a >> b)){
-        centroids[idx] = make_pair(a,b));
-        idx++;
-    }
-    
+	psu_mutex_lock(0);
+	for(auto p : points) {
 
-    //TODO: register data segment call
-    psu_dsm_register_datasegment(&)
-    
-
-    for(auto point : points){
-
-        float x1 = point.first;
-        float y1 = point.second;
+        float x1 = p.x;
+        float y1 = p.y;
         
         float min_distance = FLT_MAX;
-        float centroid;
+        int centroid;
 
 
-        for(int i = 0; i < 4; i++){
+        for(int i = 0; i < 4; i++) {
     
-            float x2 = centroids[i].first;
-            float y2 = centroids[i].second;
+            float x2 = centroids[i].x;
+            float y2 = centroids[i].y;
 
             float dist = pow(x2 - x1, 2) + pow(y2 - y1, 2);
             dist = sqrt(dist);
@@ -102,93 +114,66 @@ void kmeans_init(){
             }
         }
 
-        psu_mutex_lock(0);
-        
-        int size = (int) kmeans[centroid][0].first;
-        kmeans[centroid][size+1] = make_pair(x1, y1);
-        kmeans[centroid][0] = make_pair(((float) size + 1), 0.0f);
-        
-        psu_mutex_unlock(0);
+        point r;
+		r.x = x1;
+		r.y = y1;
+        int size = (int)(results[centroid][0].x);
+        results[centroid][size+2] = r;
+        results[centroid][0].x = (float)(size + 1);
 
     }
-	
-	return;
+	psu_mutex_unlock(0);
 
-
-}
-
-void map_kmeans(void *inpdata, void *opdata){
-
-	kmeans_init(filename);
-    //barrier
+	Node::instance.mr_barrier();
 }
 
 
 
-
-
-
-void kmeans_reducer(int centroid_id){
-
-        
+void kmeans_reducer(int centroid_id) {
 
     float x;
     float y;
 
 
-    for(int j = 0; j < kmeans[centroid_id][0].first; j++){
-
-    //skipping over size
-    if(j != 0){
-                
-        x = x + kmeans[centroid_id][j].first;
-        y = y + kmeans[centroid_id][j].second;
-    
-        }
-
+    for(int j = 2; j < results[centroid_id][0].x; j++) {
+        x = x + results[centroid_id][j].x;
+        y = y + results[centroid_id][j].y;
     }
     
-    float x_res = x / kmeans[centroid_id][0].first;
-    float y_res = y / kmeans[centroid_id][0].first;
+    float x_res = x / results[centroid_id][0].x;
+    float y_res = y / results[centroid_id][0].x;
 
-    cout << "Centroid " << centroid_id + 1 << ": " << x_res << " " y_res << endl;
+    cout << "Centroid " << centroid_id + 1 << ": " << x_res << " " << y_res << endl;
 
-    centroids[centroid_id] = make_pair(x_res, y_res);
-
+    results[centroid_id][1].x = x_res;
+    results[centroid_id][1].y = y_res;
 }
 
 
-void reduce_kmeans(void *inpdata, void *opdata){
+void reduce_kmeans(void *inpdata, void *opdata) {
 
-    
-
-    for(int i = 0; i < 4; i++){
+    for(int i = 0; i < 4; i++) {
         if(node_id == i){
             kmeans_reducer(i);
         }
     }
 
 
-    if(total_nodes < 4){
-        if(node_id + 1 = total_nodes){
-            for(int i = 4 - total_nodes; i <= 4; i++){
-                kmeans_reducer(i);
-            }    
-        }
-    }
+	if(node_id + 1 == total_nodes) {
+	  for(int i = total_nodes; i < 4; i++) {
+		kmeans_reducer(i);
+	  }    
+	}
 
-    
-
-
-
+	Node::instance.mr_barrier();
 }
 
 
 int main(int argc, char *argv[]){
 
-	if (argc != 4){
+	if (argc < 4){
 		cout << "Wrong number of args.\n";
-		cout << "<kmeans> <input_file_name>\n";
+		cout << "<kmeans> <input_file_name> <node_id> <total_nodes>\n";
 		return 1;
 	}
 
@@ -196,10 +181,22 @@ int main(int argc, char *argv[]){
 	filename = string(argv[1]);
     node_id = atoi(argv[2]);
     total_nodes = atoi(argv[3]);
+	cout << &results << " " << NUM_CENTROIDS * MAX_SIZE * sizeof(point);
 
+    psu_dsm_register_datasegment(&results, NUM_CENTROIDS * MAX_SIZE * sizeof(point));
     
-    map_kmeans();
-    reduce_kmeans();
+	Node::instance.mr_setup(total_nodes);
+    map_kmeans(NULL, NULL);
 
+	cout << "Finished map, going into reduce" << endl;
 
+	Node::instance.mr_setup(total_nodes);
+    reduce_kmeans(NULL, NULL);
+
+	ofstream out("output_kmeans.txt");
+	for (int i = 0; i < 4; i++) {
+	  out << results[i][1].x << " " << results[i][1].y << endl;
+	}
+	out.close();
+	return 0;
 }

@@ -18,7 +18,7 @@ void psu_init_lock(int lockno) {
 	
     vector<NodeClient> conns;
     for(string h: hosts){
-        NodeClient client(grpc::CreateChannel(h, grpc::InsecureChannelCredentials()));
+	  NodeClient client(grpc::CreateChannel(h, grpc::InsecureChannelCredentials()), currentHost, h, Node::instance.get_logger());
         // Wait until ready
         client.hello();
         conns.push_back(client);

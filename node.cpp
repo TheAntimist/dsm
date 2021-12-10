@@ -155,7 +155,7 @@ Status Node::reply_lock(ServerContext* context,
 
 Node Node::instance;
 
-Node::Node() : logger(new Logger()) {
+Node::Node() : logger(new Logger("node")) {
     memset(&sig, 0, sizeof(sig));
 
     thread t(&Node::startServer, this);

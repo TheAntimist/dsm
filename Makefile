@@ -28,6 +28,9 @@ node: directory.pb.o directory.grpc.pb.o node.o
 merge: directory.pb.o directory.grpc.pb.o node.o psu_lock.o app1.o
 	$(CXX) $^ $(LDFLAGS) -o $@
 
+kmeans: directory.pb.o directory.grpc.pb.o node.o psu_lock.o kmeans.o
+	$(CXX) $^ $(LDFLAGS) -o $@
+
 mr: mapreduce
 
 mapreduce: directory.pb.o directory.grpc.pb.o node.o psu_lock.o psu_mr.o mapreduce.o

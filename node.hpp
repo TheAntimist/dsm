@@ -92,9 +92,9 @@ public:
 
   NodeClient(const NodeClient& other) : stub_(NodeService::NewStub(other.channel)) {
 	  channel = other.channel;
-	  local_host = _local_host;
-	  receiver_host = _receiver_host;
-	  logger = _logger;
+	  local_host = other.local_host;
+	  receiver_host = other.receiver_host;
+	  logger = other.logger;
   }
   NodeClient& operator=(NodeClient other) {
 	  swap(channel, other.channel);
@@ -125,7 +125,7 @@ class DirectoryClient {
   shared_ptr<Logger> logger;
 public:
   DirectoryClient() {}
-  DirectoryClient(shared_ptr<Channel> _channel, string _local_host, string _receiver_host, shared_ptr<Logger> logger) 
+  DirectoryClient(shared_ptr<Channel> _channel, string _local_host, string _receiver_host, shared_ptr<Logger> _logger) 
 	: stub_(DirectoryService::NewStub(_channel)) {
 	channel = _channel;
 	logger = _logger;
@@ -135,9 +135,9 @@ public:
 
   DirectoryClient(const DirectoryClient& other) : stub_(DirectoryService::NewStub(other.channel)) {
 	channel = other.channel;
-	local_host = _local_host;
-	receiver_host = _receiver_host;
-	logger = _logger;
+	local_host = other.local_host;
+	receiver_host = other.receiver_host;
+	logger = other.logger;
   }
   DirectoryClient& operator=(DirectoryClient other) {
 	//cout << "[debug] Channels: " << channel << " "<< other.channel << endl;
@@ -155,7 +155,7 @@ public:
 	context.set_wait_for_ready(true);
 	cout << "[debug] Sending Hello\n";
 	logger->log(string_format("----RPC call from %s to %s for %s with arguments ----",
-							local_host.c_str(), receiver_host.c_str(), hello));
+							local_host.c_str(), receiver_host.c_str(), "hello"));
 	Status status = stub_->hello(&context, req, &reply);
   }
 
@@ -376,6 +376,9 @@ public:
 
 	void mr_barrier() {
 		client.mr_barrier();
+	}
+	shared_ptr<Logger> get_logger() {
+	  return logger;
 	}
 
 	static Node instance;
