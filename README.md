@@ -1,6 +1,4 @@
-# Course 511  - Project 2 - Distributed Shared Memory System
-
-Group Members: Ankush Aniket Mishra (aam6386@psu.edu), Vinay Kumar Vemuri (vvv5079@psu.edu)
+# Distributed Shared Memory System
 
 ## Overview
 
